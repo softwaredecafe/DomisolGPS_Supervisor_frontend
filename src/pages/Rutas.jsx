@@ -6,7 +6,7 @@ export default function Rutas() {
     useEffect(() => {
         const cargarRutas = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/rutas/todas');
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/todas`);
                 const data = await response.json();
                 if (data.exito) {
                     setRutas(data.datos);

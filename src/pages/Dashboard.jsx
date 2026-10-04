@@ -19,11 +19,11 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resMonitoreo = await fetch('http://localhost:3000/api/supervision/monitoreo');
+        const resMonitoreo = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/monitoreo`);
         const dataMonitoreo = await resMonitoreo.json();
         
-        const resVisitas = await fetch('http://localhost:3000/api/supervision/visitas');
-        const dataVisitas = await resVisitas.json();
+      const resVisitas = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/visitas`);
+      const dataVisitas = await resVisitas.json();
         
         if (dataMonitoreo.exito) setVendedores(dataMonitoreo.datos);
         if (dataVisitas.exito) setVisitas(dataVisitas.datos);

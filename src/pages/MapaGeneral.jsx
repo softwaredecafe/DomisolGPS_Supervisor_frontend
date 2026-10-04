@@ -25,8 +25,8 @@ export default function MapaGeneral() {
   const cargarUbicaciones = async () => {
     try {
       const [resPersonal, resCheckins] = await Promise.all([
-        fetch('http://localhost:3000/api/personal/detallado'),
-        fetch('http://localhost:3000/api/visitas/todas-hoy')
+      fetch(`${import.meta.env.VITE_API_URL}/api/personal/detallado`),
+      fetch(`${import.meta.env.VITE_API_URL}/api/visitas/todas-hoy`)
       ]);
       
       const dataPersonal = await resPersonal.json();
