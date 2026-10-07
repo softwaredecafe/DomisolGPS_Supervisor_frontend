@@ -15,6 +15,7 @@ export default function Dashboard() {
 
   const [map, setMap] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [rutasPendientes, setRutasPendientes] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,9 +25,17 @@ export default function Dashboard() {
         
       const resVisitas = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/visitas`);
       const dataVisitas = await resVisitas.json();
+
+      const resRutas = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/todas`);
+      const dataRutas = await resRutas.json();
         
         if (dataMonitoreo.exito) setVendedores(dataMonitoreo.datos);
         if (dataVisitas.exito) setVisitas(dataVisitas.datos);
+
+        if (dataRutas.exito) {
+      const pendientes = dataRutas.datos.filter(r => r.estado !== 'aprobada');
+    setRutasPendientes(pendientes);
+}
         
         setUltimaSync(new Date().toLocaleTimeString());
       } catch (error) {
@@ -86,6 +95,23 @@ export default function Dashboard() {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25"><circle cx="12.5" cy="12.5" r="10" fill="#1f9d63" stroke="white" stroke-width="3"/><path d="M8 12.5 l3 3 l6 -6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
   };
+//-----------------------------------------------------------------------------------------
+
+  const handleAprobarRuta = async (idRuta) => {
+    try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/aprobar/${idRuta}`, {
+            method: 'PUT'
+        });
+        const data = await res.json();
+        if (data.exito) {
+            setRutasPendientes(prev => prev.filter(r => r.id !== idRuta));
+            alert("¡Ruta aprobada! El vendedor ya puede iniciar la navegación.");
+        }
+    } catch (error) {
+        console.error("Error al aprobar ruta:", error);
+        alert("Error de conexión al aprobar la ruta.");
+    }
+};
 
   return (
     <section id="dashboard" className="section active">
@@ -115,7 +141,35 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-      
+          
+      {/* PANEL DE RUTAS PENDIENTES DE APROBACIÓN */}
+{rutasPendientes.length > 0 && (
+  <div className="card routeInbox" style={{ marginBottom: '18px', background: '#fff9e6', borderColor: '#fdb022' }}>
+    <div className="cardhead">
+      <div>
+        <h3 style={{ color: '#b54708', margin: 0 }}>Rutas Pendientes de Aprobación</h3>
+        <small style={{ color: '#2f3640' }}>Revisa y autoriza los planes de visita de hoy</small>
+      </div>
+      <span className="status warn" style={{ background: '#fdb022', color: 'white' }}>{rutasPendientes.length} PENDIENTES</span>
+    </div>
+
+    <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
+      {rutasPendientes.map((ruta) => (
+        <div key={`ruta-${ruta.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
+          <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor ID</span><br/><b style={{ fontSize: '13px' }}>{ruta.vendedor_id}</b></div>
+          <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Destino</span><br/><b style={{ fontSize: '13px' }}>{ruta.nombre_cliente}</b></div>
+          <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Dirección</span><br/><b style={{ fontSize: '11px' }}>{ruta.direccion}</b></div>
+          <button 
+            onClick={() => handleAprobarRuta(ruta.id)}
+            style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+            Aprobar Ruta
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
       {/* TARJETAS DE MÉTRICAS DINÁMICAS */}
       <div className="cards grid">
         <div className="card metric">
