@@ -97,15 +97,15 @@ export default function Dashboard() {
   };
 //-----------------------------------------------------------------------------------------
 
-  const handleAprobarRuta = async (idRuta) => {
+  const handleAprobarRuta = async (vendedorId) => {
     try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/aprobar/${idRuta}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/aprobar/${vendedorId}`, {
             method: 'PUT'
         });
         const data = await res.json();
         if (data.exito) {
-            setRutasPendientes(prev => prev.filter(r => r.id !== idRuta));
-            alert("¡Ruta aprobada! El vendedor ya puede iniciar la navegación.");
+            setRutasPendientes(prev => prev.filter(r => String(r.vendedor_id) !== String(vendedorId)));
+            alert("¡Ruta aprobada! El celular reaccionará en breve.");
         }
     } catch (error) {
         console.error("Error al aprobar ruta:", error);
@@ -160,7 +160,7 @@ export default function Dashboard() {
           <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Destino</span><br/><b style={{ fontSize: '13px' }}>{ruta.nombre_cliente}</b></div>
           <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Dirección</span><br/><b style={{ fontSize: '11px' }}>{ruta.direccion}</b></div>
           <button 
-            onClick={() => handleAprobarRuta(ruta.id)}
+            onClick={() => handleAprobarRuta(ruta.vendedor_id)}
             style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
             Aprobar Ruta
           </button>
