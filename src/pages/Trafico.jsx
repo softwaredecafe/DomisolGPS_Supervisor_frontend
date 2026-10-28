@@ -108,8 +108,7 @@ export default function Trafico() {
         const data = await response.json();
 
         if (data.exito) {
-          const rutasActivas = data.datos.filter(r => r.estado !== 'aprobada' && r.estado !== 'finalizada');
-          
+          const rutasActivas = data.datos.filter(r => r.estado === 'aprobada' || r.estado === 'pendiente');
           const rutasEvaluadas = await calcularTraficoReal(rutasActivas);
           setRutasTrafico(rutasEvaluadas);
         }
