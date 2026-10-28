@@ -24,6 +24,7 @@ export default function MapaGeneral() {
 
   const cargarUbicaciones = async () => {
     try {
+      const adminId = localStorage.getItem('admin_id');
       const [resPersonal, resCheckins] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_URL}/api/personal/detallado`),
       fetch(`${import.meta.env.VITE_API_URL}/api/visitas/todas-hoy`)
@@ -143,7 +144,6 @@ export default function MapaGeneral() {
               onUnmount={onUnmount}
               options={{ mapTypeControl: false, streetViewControl: false }}
             >
-              {/* PINES DE EMPLEADOS */}
               {empleados.map((emp) => {
                 if (!emp.latitud || !emp.longitud) return null;
                 return (
@@ -156,7 +156,6 @@ export default function MapaGeneral() {
                 );
               })}
 
-              {/* PINES DE CHECK-INS */}
               {checkins.map((chk) => {
                 if (!chk.latitud || !chk.longitud) return null;
                 return (
@@ -169,7 +168,6 @@ export default function MapaGeneral() {
                 );
               })}
 
-              {/* VENTANA EMERGENTE (POPUP) */}
               {selectedMarker && (
                 <InfoWindowF
                   position={{ 

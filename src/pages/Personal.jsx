@@ -7,12 +7,30 @@ export default function Personal() {
   const [ultimaSync, setUltimaSync] = useState('Calculando...');
   
   const [mostrarModal, setMostrarModal] = useState(false);
-  const [nuevoUsuario, setNuevoUsuario] = useState({ nombre: '', usuario: '', password: '' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
+  
+  const [nuevoUsuario, setNuevoUsuario] = useState({ 
+    nombre: '', 
+    usuario: '', 
+    password: '',
+    cargo: '',
+    tienda: '',
+    supervisor: '',
+    direccion: '',
+    telefonoCorp: '',
+    telefonoTienda: ''
+  });
+  
   const [mensajeModal, setMensajeModal] = useState('');
+
+  const rolAdmin = localStorage.getItem('admin_rol') || '';
+  const esSupervisor = rolAdmin.toLowerCase().includes('supervis');
 
   const cargarPersonal = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/detallado`);
+      const adminId = localStorage.getItem('admin_id');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/detallado?admin_id=${adminId}`);
       const data = await response.json();
       
       if (data.exito) {
@@ -38,7 +56,6 @@ export default function Personal() {
         });
       }
     } catch (error) {
-      console.error("Error cargando personal:", error);
       setUltimaSync('Error de conexión');
     }
   };
@@ -49,13 +66,65 @@ export default function Personal() {
     return () => clearInterval(intervalo);
   }, []);
 
-  const handleCrearUsuario = async (e) => {
+  const handleAbrirCrear = () => {
+    setIsEditing(false);
+    setEditId(null);
+    setNuevoUsuario({ nombre: '', usuario: '', password: '', cargo: '', tienda: '', supervisor: '', direccion: '', telefonoCorp: '', telefonoTienda: '' });
+    setMensajeModal('');
+    setMostrarModal(true);
+  };
+
+  const handleAbrirEditar = (emp) => {
+    setIsEditing(true);
+    setEditId(emp.id);
+    setNuevoUsuario({
+      nombre: emp.nombre || '',
+      usuario: emp.usuario || '',
+      password: '', 
+      cargo: emp.rol || emp.cargo || '',
+      tienda: emp.tienda || '',
+      supervisor: emp.supervisor || '',
+      direccion: emp.direccion || '',
+      telefonoCorp: emp.telefonoCorp || emp.telefono_corp || '',
+      telefonoTienda: emp.telefonoTienda || emp.telefono_tienda || ''
+    });
+    setMensajeModal('');
+    setMostrarModal(true);
+  };
+
+  const handleEliminar = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar permanentemente a este usuario?')) return;
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/eliminar/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+      
+      if (data.exito) {
+        setSelectedEmp(null);
+        cargarPersonal();
+      } else {
+        alert(data.mensaje || 'Error al eliminar');
+      }
+    } catch (error) {
+      alert('Error de conexión con el servidor');
+    }
+  };
+
+  const handleGuardarUsuario = async (e) => {
     e.preventDefault();
     setMensajeModal('Guardando...');
     
+    const url = isEditing 
+      ? `${import.meta.env.VITE_API_URL}/api/usuarios/editar/${editId}`
+      : `${import.meta.env.VITE_API_URL}/api/usuarios/crear`;
+      
+    const method = isEditing ? 'PUT' : 'POST';
+    
     try {
-      const response = await fetch('http://localhost:3000/api/usuarios/crear', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevoUsuario)
       });
@@ -63,15 +132,14 @@ export default function Personal() {
       const data = await response.json();
       
       if (data.exito) {
-        setMensajeModal('¡Usuario creado con éxito!');
-        setNuevoUsuario({ nombre: '', usuario: '', password: '' });
+        setMensajeModal(isEditing ? '¡Usuario actualizado con éxito!' : '¡Usuario creado con éxito!');
         cargarPersonal(); 
         setTimeout(() => {
           setMostrarModal(false);
           setMensajeModal('');
         }, 1500);
       } else {
-        setMensajeModal(data.mensaje || 'Error al crear usuario');
+        setMensajeModal(data.mensaje || 'Error al guardar usuario');
       }
     } catch (error) {
       setMensajeModal('Error de conexión con el servidor');
@@ -109,7 +177,6 @@ export default function Personal() {
   return (
     <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', background: '#fcfcfd', minHeight: '100vh', position: 'relative' }}>
       
-      {/* HEADER SUPERIOR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '24px', color: '#101828' }}>Personal</h2>
@@ -121,19 +188,19 @@ export default function Personal() {
           </span>
           <span style={{ fontSize: '13px', color: '#667085' }}>Última actualización: {ultimaSync}</span>
           
-          <button 
-            onClick={() => setMostrarModal(true)}
-            style={{ background: '#1570ef', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
-          >
-            + Nuevo Asesor
-          </button>
+          {esSupervisor && (
+            <button 
+              onClick={handleAbrirCrear}
+              style={{ background: '#1570ef', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+            >
+              + Nuevo Personal
+            </button>
+          )}
         </div>
       </div>
 
-      {/* LAYOUT HORIZONTAL PRINCIPAL */}
       <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px', alignItems: 'start' }}>
         
-        {/* COLUMNA IZQUIERDA: LISTA DESPLAZABLE */}
         <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #eaecf0', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
             <h3 style={{ margin: 0 }}>Personal por tienda</h3>
@@ -182,15 +249,15 @@ export default function Personal() {
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '12px', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s',
-                          border: isSelected ? '1px solid #d0d5dd' : '1px solid transparent',
-                          background: isSelected ? '#f9fafb' : '#fff',
-                          boxShadow: isSelected ? '0 1px 2px rgba(16,24,40,0.05)' : 'none'
+                          border: isSelected ? '1px solid #fdb022' : '1px solid transparent',
+                          background: isSelected ? '#fffaf5' : '#fff',
+                          boxShadow: isSelected ? '0 2px 4px rgba(253,176,34,0.15)' : '1px 1px 4px rgba(0,0,0,0.04)'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{ 
-                            width: '40px', height: '40px', borderRadius: '50%', 
-                            background: '#f2f4f7', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '40px', height: '40px', borderRadius: '12px', 
+                            background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontWeight: 'bold', color: '#101828',
                             border: `2px solid ${getAvatarBorder(rolSeguro)}`
                           }}>
@@ -202,8 +269,8 @@ export default function Personal() {
                           </div>
                         </div>
                         <span style={{ 
-                          background: badge.bg, color: badge.color, 
-                          padding: '4px 10px', borderRadius: '16px', fontSize: '12px', fontWeight: '600' 
+                          background: badge.bg, color: badge.color, border: `1px solid ${badge.color}33`,
+                          padding: '4px 10px', borderRadius: '16px', fontSize: '11px', fontWeight: '600' 
                         }}>
                           {estadoSeguro}
                         </span>
@@ -216,100 +283,198 @@ export default function Personal() {
           })}
         </div>
 
-        {/* COLUMNA DERECHA: PERFIL FIJO DETALLADO */}
         {selectedEmp && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #eaecf0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ 
-                    width: '56px', height: '56px', borderRadius: '50%', fontSize: '18px',
-                    background: '#f2f4f7', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 'bold', color: '#101828', border: `3px solid ${getAvatarBorder(selectedEmp.rol)}`
-                  }}>
-                    {selectedEmp.iniciales || obtenerIniciales(selectedEmp.nombre)}
-                  </div>
-                  <div>
-                    <h2 style={{ margin: 0, fontSize: '20px', color: '#101828' }}>{selectedEmp.nombre}</h2>
-                    <p style={{ margin: '4px 0 0 0', color: '#667085', fontSize: '14px' }}>
-                      {selectedEmp.rol || 'Asesor de Tienda'} · {selectedEmp.correo || 'No registrado'} <br/> 
-                      {selectedEmp.telefonoCorp || 'No asignado'} · Jornada {selectedEmp.horario || 'Diurna'}
-                    </p>
-                  </div>
-                </div>
-                <span style={{ 
-                  background: getBadgeStyle(selectedEmp.estado || 'Sin reporte').bg, 
-                  color: getBadgeStyle(selectedEmp.estado || 'Sin reporte').color, 
-                  padding: '6px 12px', borderRadius: '16px', fontSize: '14px', fontWeight: '600' 
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <div>
+                 <h2 style={{ margin: 0, fontSize: '20px', color: '#101828' }}>{selectedEmp.nombre}</h2>
+                 <p style={{ margin: '4px 0 0 0', color: '#667085', fontSize: '14px' }}>
+                   {selectedEmp.rol || selectedEmp.cargo || 'Asesor de Tienda'} · {selectedEmp.tienda || 'Sin Tienda'}
+                 </p>
+               </div>
+               
+               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                 
+                 {esSupervisor && (
+                   <>
+                     <button 
+                       onClick={() => handleAbrirEditar(selectedEmp)}
+                       style={{ background: '#fff', border: '1px solid #d0d5dd', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', color: '#344054', fontSize: '13px' }}
+                     >
+                       Editar Perfil
+                     </button>
+                     <button 
+                       onClick={() => handleEliminar(selectedEmp.id)}
+                       style={{ background: '#fff', border: '1px solid #fda29b', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', color: '#d92d20', fontSize: '13px' }}
+                     >
+                       Eliminar
+                     </button>
+                   </>
+                 )}
+
+                 <span style={{ 
+                    background: getBadgeStyle(selectedEmp.estado || 'Sin reporte').bg, 
+                    color: getBadgeStyle(selectedEmp.estado || 'Sin reporte').color, 
+                    border: `1px solid ${getBadgeStyle(selectedEmp.estado || 'Sin reporte').color}33`,
+                    padding: '6px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700', marginLeft: '10px' 
+                 }}>
+                    {selectedEmp.estado || 'Sin reporte'}
+                 </span>
+               </div>
+            </div>
+
+            <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #eaecf0', boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingBottom: '20px', marginBottom: '20px', borderBottom: '1px solid #eaecf0' }}>
+                <div style={{ 
+                  width: '64px', height: '64px', borderRadius: '16px', fontSize: '22px',
+                  background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 'bold', color: '#101828', border: `2px solid ${getAvatarBorder(selectedEmp.rol)}`
                 }}>
-                  {selectedEmp.estado || 'Sin reporte'}
-                </span>
+                  {selectedEmp.iniciales || obtenerIniciales(selectedEmp.nombre)}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', color: '#101828' }}>{selectedEmp.nombre}</h3>
+                  <p style={{ margin: '6px 0 0 0', color: '#667085', fontSize: '13px', lineHeight: '1.5' }}>
+                    {selectedEmp.rol || selectedEmp.cargo || 'Asesor de Tienda'} · {selectedEmp.correo || (selectedEmp.usuario ? selectedEmp.usuario + '@domisol.com.gt' : 'N/A')} <br/> 
+                    {selectedEmp.telefonoCorp || selectedEmp.telefono_corp || 'N/A'}
+                  </p>
+                </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', borderTop: '1px solid #eaecf0', paddingTop: '24px' }}>
-                <InfoItem label="TIENDA / SUCURSAL" value={selectedEmp.tienda || 'No registrada'} />
-                <InfoItem label="CARGO" value={selectedEmp.rol || 'Asesor'} />
-                <InfoItem label="SUPERVISOR" value={selectedEmp.supervisor || 'Pendiente'} />
-                <InfoItem label="TELÉFONO CORPORATIVO" value={selectedEmp.telefonoCorp || 'N/A'} />
-                <InfoItem label="CORREO" value={selectedEmp.correo || 'N/A'} />
-                <InfoItem label="TELÉFONO TIENDA" value={selectedEmp.telefonoTienda || 'N/A'} />
-                <InfoItem label="ÚLTIMA LATITUD" value={selectedEmp.latitud ? String(selectedEmp.latitud).substring(0, 8) : 'Sin GPS'} />
-                <InfoItem label="ÚLTIMA LONGITUD" value={selectedEmp.longitud ? String(selectedEmp.longitud).substring(0, 9) : 'Sin GPS'} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <InfoItem label="TIENDA / SUCURSAL" value={selectedEmp.tienda || 'N/A'} />
+                <InfoItem label="CARGO" value={selectedEmp.rol || selectedEmp.cargo || 'N/A'} />
+                
+                <InfoItem label="SUPERVISOR" value={selectedEmp.supervisor || 'N/A'} />
+                <InfoItem label="TELÉFONO CORPORATIVO" value={selectedEmp.telefonoCorp || selectedEmp.telefono_corp || 'N/A'} />
+                
+                <InfoItem label="CORREO" value={selectedEmp.correo || (selectedEmp.usuario ? selectedEmp.usuario + '@domisol.com.gt' : 'N/A')} />
+                <InfoItem label="TELÉFONO TIENDA" value={selectedEmp.telefonoTienda || selectedEmp.telefono_tienda || 'N/A'} />
+                
+                <InfoItem label="DIRECCIÓN TIENDA" value={selectedEmp.direccion || 'N/A'} />
               </div>
+
             </div>
           </div>
         )}
       </div>
 
-      {/* MODAL DE NUEVO USUARIO */}
       {mostrarModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(16, 24, 40, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
         }}>
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '400px', boxShadow: '0 20px 24px -4px rgba(16, 24, 40, 0.08)' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#101828' }}>Crear Nuevo Asesor</h3>
-            <form onSubmit={handleCrearUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '600px', boxShadow: '0 20px 24px -4px rgba(16, 24, 40, 0.08)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#101828' }}>
+              {isEditing ? 'Editar Personal' : 'Crear Nuevo Personal'}
+            </h3>
+            <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               
-              <div>
+              <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Nombre Completo</label>
                 <input 
                   type="text" required
                   value={nuevoUsuario.nombre}
                   onChange={(e) => setNuevoUsuario({...nuevoUsuario, nombre: e.target.value})}
                   style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
-                  placeholder="Ej: Karla Argueta"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Usuario (App Móvil)</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Usuario (App Móvil / Login)</label>
                 <input 
                   type="text" required
                   value={nuevoUsuario.usuario}
                   onChange={(e) => setNuevoUsuario({...nuevoUsuario, usuario: e.target.value})}
                   style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
-                  placeholder="Ej: kargueta"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Contraseña</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Contraseña {isEditing && '(Opcional)'}</label>
                 <input 
-                  type="password" required
+                  type="password" required={!isEditing}
                   value={nuevoUsuario.password}
                   onChange={(e) => setNuevoUsuario({...nuevoUsuario, password: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
+                  placeholder={isEditing ? "Dejar en blanco para mantener actual" : ""}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Cargo</label>
+                <select 
+                  required
+                  value={nuevoUsuario.cargo}
+                  onChange={(e) => setNuevoUsuario({...nuevoUsuario, cargo: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
+                >
+                  <option value="">Selecciona un cargo</option>
+                  <option value="Asesor">Asesor</option>
+                  <option value="Gerente">Gerente</option>
+                  <option value="Supervisor">Supervisor</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Supervisor Asignado</label>
+                <input 
+                  type="text"
+                  value={nuevoUsuario.supervisor}
+                  onChange={(e) => setNuevoUsuario({...nuevoUsuario, supervisor: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Tienda / Sucursal</label>
+                <input 
+                  type="text"
+                  value={nuevoUsuario.tienda}
+                  onChange={(e) => setNuevoUsuario({...nuevoUsuario, tienda: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Teléfono Tienda</label>
+                <input 
+                  type="text"
+                  value={nuevoUsuario.telefonoTienda}
+                  onChange={(e) => setNuevoUsuario({...nuevoUsuario, telefonoTienda: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Teléfono Corporativo (Móvil)</label>
+                <input 
+                  type="text"
+                  value={nuevoUsuario.telefonoCorp}
+                  onChange={(e) => setNuevoUsuario({...nuevoUsuario, telefonoCorp: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#344054', marginBottom: '6px' }}>Dirección</label>
+                <input 
+                  type="text"
+                  value={nuevoUsuario.direccion}
+                  onChange={(e) => setNuevoUsuario({...nuevoUsuario, direccion: e.target.value})}
                   style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d0d5dd', boxSizing: 'border-box' }}
                 />
               </div>
 
               {mensajeModal && (
-                <div style={{ fontSize: '14px', color: mensajeModal.includes('éxito') ? '#0d945b' : '#d92d20', fontWeight: '500' }}>
+                <div style={{ gridColumn: '1 / -1', fontSize: '14px', color: mensajeModal.includes('éxito') ? '#0d945b' : '#d92d20', fontWeight: '500' }}>
                   {mensajeModal}
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button 
                   type="button" 
                   onClick={() => { setMostrarModal(false); setMensajeModal(''); }}
@@ -334,9 +499,9 @@ export default function Personal() {
 
 function InfoItem({ label, value }) {
   return (
-    <div style={{ paddingBottom: '12px', borderBottom: '1px solid #f9fafb' }}>
-      <div style={{ fontSize: '11px', color: '#98a2b3', fontWeight: '600', letterSpacing: '0.5px', marginBottom: '4px' }}>{label}</div>
-      <div style={{ fontSize: '14px', color: '#101828', fontWeight: '500' }}>{value}</div>
+    <div style={{ padding: '14px 16px', border: '1px solid #eaecf0', borderRadius: '12px', background: '#fff' }}>
+      <div style={{ fontSize: '10px', color: '#98a2b3', fontWeight: '700', letterSpacing: '0.5px', marginBottom: '4px', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: '14px', color: '#101828', fontWeight: '600' }}>{value}</div>
     </div>
   );
 }

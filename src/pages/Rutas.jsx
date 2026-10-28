@@ -6,6 +6,7 @@ export default function Rutas() {
     useEffect(() => {
         const cargarRutas = async () => {
             try {
+                const adminId = localStorage.getItem('admin_id');
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/todas`);
                 const data = await response.json();
                 if (data.exito) {

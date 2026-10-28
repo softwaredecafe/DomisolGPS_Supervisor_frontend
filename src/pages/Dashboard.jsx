@@ -20,22 +20,24 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resMonitoreo = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/monitoreo`);
+        const adminId = localStorage.getItem('admin_id');
+        
+        const resMonitoreo = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/monitoreo?admin_id=${adminId}`);
         const dataMonitoreo = await resMonitoreo.json();
         
-      const resVisitas = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/visitas`);
-      const dataVisitas = await resVisitas.json();
+        const resVisitas = await fetch(`${import.meta.env.VITE_API_URL}/api/supervision/visitas?admin_id=${adminId}`);
+        const dataVisitas = await resVisitas.json();
 
-      const resRutas = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/todas`);
-      const dataRutas = await resRutas.json();
+        const resRutas = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/todas?admin_id=${adminId}`);
+        const dataRutas = await resRutas.json();
         
         if (dataMonitoreo.exito) setVendedores(dataMonitoreo.datos);
         if (dataVisitas.exito) setVisitas(dataVisitas.datos);
 
         if (dataRutas.exito) {
-      const pendientes = dataRutas.datos.filter(r => r.estado !== 'aprobada');
-    setRutasPendientes(pendientes);
-}
+          const pendientes = dataRutas.datos.filter(r => r.estado !== 'aprobada');
+          setRutasPendientes(pendientes);
+        }
         
         setUltimaSync(new Date().toLocaleTimeString());
       } catch (error) {
@@ -95,7 +97,6 @@ export default function Dashboard() {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25"><circle cx="12.5" cy="12.5" r="10" fill="#1f9d63" stroke="white" stroke-width="3"/><path d="M8 12.5 l3 3 l6 -6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
   };
-//-----------------------------------------------------------------------------------------
 
   const handleAprobarRuta = async (rutaCompleta) => {
     const vendedorId = rutaCompleta.vendedor_id || rutaCompleta.id_vendedor || 1;
@@ -115,12 +116,11 @@ export default function Dashboard() {
         console.error("Error al aprobar ruta:", error);
         alert("Error de conexión al aprobar la ruta.");
     }
-};
+  };
 
   return (
     <section id="dashboard" className="section active">
       
-      {/* PANEL DE ÚLTIMOS CHECK-INS EN VIVO */}
       <div className="card routeInbox" style={{ marginBottom: '18px', background: '#e8f7ef', borderColor: '#1f9d63' }}>
         <div className="cardhead">
           <div>
@@ -146,35 +146,33 @@ export default function Dashboard() {
         </div>
       </div>
           
-      {/* PANEL DE RUTAS PENDIENTES DE APROBACIÓN */}
-{rutasPendientes.length > 0 && (
-  <div className="card routeInbox" style={{ marginBottom: '18px', background: '#fff9e6', borderColor: '#fdb022' }}>
-    <div className="cardhead">
-      <div>
-        <h3 style={{ color: '#b54708', margin: 0 }}>Rutas Pendientes de Aprobación</h3>
-        <small style={{ color: '#2f3640' }}>Revisa y autoriza los planes de visita de hoy</small>
-      </div>
-      <span className="status warn" style={{ background: '#fdb022', color: 'white' }}>{rutasPendientes.length} PENDIENTES</span>
-    </div>
+      {rutasPendientes.length > 0 && (
+        <div className="card routeInbox" style={{ marginBottom: '18px', background: '#fff9e6', borderColor: '#fdb022' }}>
+          <div className="cardhead">
+            <div>
+              <h3 style={{ color: '#b54708', margin: 0 }}>Rutas Pendientes de Aprobación</h3>
+              <small style={{ color: '#2f3640' }}>Revisa y autoriza los planes de visita de hoy</small>
+            </div>
+            <span className="status warn" style={{ background: '#fdb022', color: 'white' }}>{rutasPendientes.length} PENDIENTES</span>
+          </div>
 
-    <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
-      {rutasPendientes.map((ruta) => (
-        <div key={`ruta-${ruta.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
-          <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor ID</span><br/><b style={{ fontSize: '13px' }}>{ruta.vendedor_id}</b></div>
-          <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Destino</span><br/><b style={{ fontSize: '13px' }}>{ruta.nombre_cliente}</b></div>
-          <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Dirección</span><br/><b style={{ fontSize: '11px' }}>{ruta.direccion}</b></div>
-          <button 
-            onClick={() => handleAprobarRuta(ruta)}
-            style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Aprobar Ruta
-          </button>
+          <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
+            {rutasPendientes.map((ruta) => (
+              <div key={`ruta-${ruta.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
+                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor ID</span><br/><b style={{ fontSize: '13px' }}>{ruta.vendedor_id}</b></div>
+                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Destino</span><br/><b style={{ fontSize: '13px' }}>{ruta.nombre_cliente}</b></div>
+                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Dirección</span><br/><b style={{ fontSize: '11px' }}>{ruta.direccion}</b></div>
+                <button 
+                  onClick={() => handleAprobarRuta(ruta)}
+                  style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Aprobar Ruta
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
-    </div>
-  </div>
-)}
+      )}
 
-      {/* TARJETAS DE MÉTRICAS DINÁMICAS */}
       <div className="cards grid">
         <div className="card metric">
           <span>Activos</span>
@@ -201,7 +199,6 @@ export default function Dashboard() {
       </div>
 
       <div className="layout">
-        {/* MAPA OPERATIVO */}
         <div className="card mapcard">
           <div className="mapTop">
             <div>
@@ -219,7 +216,6 @@ export default function Dashboard() {
                 onUnmount={onUnmount}
                 options={{ mapTypeControl: false, streetViewControl: false }}
               >
-                {/* Marcadores de Vendedores */}
                 {vendedores.map((vendedor) => {
                   if (!vendedor.latitud || !vendedor.longitud) return null;
                   return (
@@ -232,7 +228,6 @@ export default function Dashboard() {
                   );
                 })}
 
-                {/* Marcadores de Check-ins (Visitas) */}
                 {visitas.map((visita) => {
                   if (!visita.latitud || !visita.longitud) return null;
                   return (
@@ -245,7 +240,6 @@ export default function Dashboard() {
                   );
                 })}
 
-                {/* Ventana Emergente (Popup) */}
                 {selectedMarker && (
                   <InfoWindowF
                     position={{ 
@@ -284,7 +278,6 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* LISTADO DINÁMICO */}
         <div className="card">
           <div className="cardhead">
             <h3>Vendedores monitoreados</h3>
@@ -301,7 +294,9 @@ export default function Dashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: '600', color: '#2f3640' }}>{vendedor.nombre}</div>
-                    <div style={{ fontSize: '11px', color: '#7f8fa6' }}>Hace {vendedor.minutos_inactivo} minutos</div>
+                    <div style={{ fontSize: '11px', color: '#7f8fa6' }}>
+                      {vendedor.minutos_inactivo >= 9999 ? 'Sin registros GPS' : `Hace ${vendedor.minutos_inactivo} minutos`}
+                    </div>
                   </div>
                   <span className="pill" style={{ background: vendedor.minutos_inactivo > 5 ? '#f1f2f6' : '#e8f8f5', color: vendedor.minutos_inactivo > 5 ? '#7f8fa6' : '#1abc9c', fontSize: '11px', padding: '4px 8px', borderRadius: '12px' }}>
                     {vendedor.minutos_inactivo > 5 ? 'Sin reporte' : 'Reportando'}
