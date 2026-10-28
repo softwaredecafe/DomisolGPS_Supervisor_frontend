@@ -16,7 +16,8 @@ export default function Trafico() {
     const service = new window.google.maps.DistanceMatrixService();
     
     const promesas = rutasDb.map(async (ruta) => {
-      if (!ruta.origen_lat || !ruta.lat_destino || ruta.lat_destino == 0) {
+      // 1. Validar coordenadas
+      if (!ruta.origen_lat || !ruta.lat_destino || parseFloat(ruta.lat_destino) === 0) {
         return {
           ...ruta,
           detalleETA: 'Esperando coordenadas de origen o destino para evaluar.',
@@ -25,6 +26,7 @@ export default function Trafico() {
         };
       }
 
+      // 2. Validar inactividad
       if (ruta.minutos_inactivo > 15 && ruta.minutos_inactivo !== 9999) {
         return {
           ...ruta,
@@ -34,20 +36,22 @@ export default function Trafico() {
         };
       }
 
+      // 3. Consultar a Google Maps
       try {
-        const origen = new window.google.maps.LatLng(parseFloat(ruta.origen_lat), parseFloat(ruta.origen_lng));
-        const destino = new window.google.maps.LatLng(parseFloat(ruta.lat_destino), parseFloat(ruta.lng_destino));
+        const origenConfig = { lat: parseFloat(ruta.origen_lat), lng: parseFloat(ruta.origen_lng) };
+        const destinoConfig = { lat: parseFloat(ruta.lat_destino), lng: parseFloat(ruta.lng_destino) };
 
         const response = await service.getDistanceMatrix({
-          origins: [origen],
-          destinations: [destino],
-          travelMode: 'DRIVING',
+          origins: [origenConfig],
+          destinations: [destinoConfig],
+          travelMode: window.google.maps.TravelMode.DRIVING,
           drivingOptions: {
-            departureTime: new Date(Date.now() + 1000), 
+            departureTime: new Date(), 
             trafficModel: 'bestguess'
           }
         });
 
+        // Revisar errores internos de respuesta
         const element = response.rows[0].elements[0];
         
         if (element.status === 'OK') {
@@ -80,13 +84,18 @@ export default function Trafico() {
             estiloBoton
           };
         } else {
-          throw new Error('No se pudo calcular la ruta');
+          // Si el estatus de la ruta falló (ej. ZERO_RESULTS porque no hay calles que los conecten)
+          throw new Error(`Rechazo de ruta: ${element.status}`);
         }
       } catch (error) {
-        console.error("Error API Google:", error);
+        console.error("Error API Google detallado:", error);
+        
+        // Extraemos la queja exacta de Google para mostrarla en pantalla
+        const mensajeReal = error.message || 'Error desconocido de conexión';
+
         return {
           ...ruta,
-          detalleETA: 'Error al triangular ETA con el proveedor de mapas.',
+          detalleETA: `Fallo en el cálculo: ${mensajeReal}`,
           estadoBoton: 'Error de API',
           estiloBoton: { bg: '#fee4e2', color: '#d92d20' }
         };
