@@ -13,10 +13,9 @@ export default function Trafico() {
   const calcularTraficoReal = useCallback(async (rutasDb) => {
     if (!window.google) return rutasDb;
     
-    const service = new window.google.maps.DistanceMatrixService();
+    const directionsService = new window.google.maps.DirectionsService();
     
     const promesas = rutasDb.map(async (ruta) => {
-      // 1. Validar coordenadas
       if (!ruta.origen_lat || !ruta.lat_destino || parseFloat(ruta.lat_destino) === 0) {
         return {
           ...ruta,
@@ -26,7 +25,6 @@ export default function Trafico() {
         };
       }
 
-      // 2. Validar inactividad
       if (ruta.minutos_inactivo > 15 && ruta.minutos_inactivo !== 9999) {
         return {
           ...ruta,
@@ -36,66 +34,67 @@ export default function Trafico() {
         };
       }
 
-      // 3. Consultar a Google Maps
       try {
         const origenConfig = { lat: parseFloat(ruta.origen_lat), lng: parseFloat(ruta.origen_lng) };
         const destinoConfig = { lat: parseFloat(ruta.lat_destino), lng: parseFloat(ruta.lng_destino) };
 
-        const response = await service.getDistanceMatrix({
-          origins: [origenConfig],
-          destinations: [destinoConfig],
-          travelMode: window.google.maps.TravelMode.DRIVING,
-          drivingOptions: {
-            departureTime: new Date(), 
-            trafficModel: 'bestguess'
-          }
+        return new Promise((resolve) => {
+          directionsService.route({
+            origin: origenConfig,
+            destination: destinoConfig,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+            drivingOptions: {
+              departureTime: new Date(),
+              trafficModel: 'bestguess'
+            }
+          }, (result, status) => {
+            if (status === window.google.maps.DirectionsStatus.OK) {
+              const leg = result.routes[0].legs[0];
+              
+              const durationOriginalText = leg.duration.text;
+              const durationTrafficText = leg.duration_in_traffic ? leg.duration_in_traffic.text : durationOriginalText;
+              
+              const durationValue = leg.duration.value;
+              const trafficValue = leg.duration_in_traffic ? leg.duration_in_traffic.value : durationValue;
+              
+              const diferenciaMinutos = (trafficValue - durationValue) / 60;
+
+              let estadoBoton = '';
+              let estiloBoton = {};
+              
+              if (diferenciaMinutos > 15) {
+                estadoBoton = 'Justificado (Tráfico)';
+                estiloBoton = { bg: '#e6f5ed', color: '#0d945b' };
+              } else if (diferenciaMinutos < -5) {
+                estadoBoton = 'Vía rápida';
+                estiloBoton = { bg: '#eff8ff', color: '#175cd3' };
+              } else {
+                estadoBoton = 'En tiempo normal';
+                estiloBoton = { bg: '#f2f4f7', color: '#344054' };
+              }
+
+              resolve({
+                ...ruta,
+                detalleETA: `ETA original ${durationOriginalText} · ETA con tráfico ${durationTrafficText} · Aprox a ${leg.distance.text}`,
+                estadoBoton,
+                estiloBoton
+              });
+            } else {
+              resolve({
+                ...ruta,
+                detalleETA: `Error de cálculo (Google Directions): ${status}`,
+                estadoBoton: 'Error de API',
+                estiloBoton: { bg: '#fee4e2', color: '#d92d20' }
+              });
+            }
+          });
         });
 
-        // Revisar errores internos de respuesta
-        const element = response.rows[0].elements[0];
-        
-        if (element.status === 'OK') {
-          const durationOriginalText = element.duration.text;
-          const durationTrafficText = element.duration_in_traffic ? element.duration_in_traffic.text : durationOriginalText;
-          
-          const durationValue = element.duration.value;
-          const trafficValue = element.duration_in_traffic ? element.duration_in_traffic.value : durationValue;
-          
-          const diferenciaMinutos = (trafficValue - durationValue) / 60;
-
-          let estadoBoton = '';
-          let estiloBoton = {};
-          
-          if (diferenciaMinutos > 15) {
-            estadoBoton = 'Justificado (Tráfico)';
-            estiloBoton = { bg: '#e6f5ed', color: '#0d945b' };
-          } else if (diferenciaMinutos < -5) {
-            estadoBoton = 'Vía rápida';
-            estiloBoton = { bg: '#eff8ff', color: '#175cd3' };
-          } else {
-            estadoBoton = 'En tiempo normal';
-            estiloBoton = { bg: '#f2f4f7', color: '#344054' };
-          }
-
-          return {
-            ...ruta,
-            detalleETA: `ETA original ${durationOriginalText} · ETA con tráfico ${durationTrafficText} · Aprox a ${element.distance.text}`,
-            estadoBoton,
-            estiloBoton
-          };
-        } else {
-          // Si el estatus de la ruta falló (ej. ZERO_RESULTS porque no hay calles que los conecten)
-          throw new Error(`Rechazo de ruta: ${element.status}`);
-        }
       } catch (error) {
         console.error("Error API Google detallado:", error);
-        
-        // Extraemos la queja exacta de Google para mostrarla en pantalla
-        const mensajeReal = error.message || 'Error desconocido de conexión';
-
         return {
           ...ruta,
-          detalleETA: `Fallo en el cálculo: ${mensajeReal}`,
+          detalleETA: 'Excepción al consultar tráfico en el mapa.',
           estadoBoton: 'Error de API',
           estiloBoton: { bg: '#fee4e2', color: '#d92d20' }
         };
