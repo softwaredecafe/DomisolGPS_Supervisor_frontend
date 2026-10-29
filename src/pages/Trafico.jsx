@@ -193,11 +193,7 @@ export default function Trafico() {
           )}
         </div>
 
-        <div style={{ 
-          marginTop: '24px', background: '#f8fafc', borderLeft: '4px solid #1570ef', 
-          borderRadius: '0 8px 8px 0', padding: '16px 20px', color: '#102f57', fontSize: '14px', lineHeight: '1.5' 
-        }}>
-        </div>
+        
 
       </div>
     </div>
