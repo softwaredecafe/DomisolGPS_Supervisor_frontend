@@ -197,7 +197,6 @@ export default function Trafico() {
           marginTop: '24px', background: '#f8fafc', borderLeft: '4px solid #1570ef', 
           borderRadius: '0 8px 8px 0', padding: '16px 20px', color: '#102f57', fontSize: '14px', lineHeight: '1.5' 
         }}>
-          <b>Auditoría en Producción:</b> El sistema cruza las coordenadas en vivo del teléfono con la ubicación del cliente declarada en la ruta. Un atraso superior a 15 minutos en el ETA original se auto-justifica como <i>Tráfico</i>. Si la aplicación no detecta movimiento, solicita revisión manual.
         </div>
 
       </div>
