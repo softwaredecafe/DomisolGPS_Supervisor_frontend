@@ -20,7 +20,7 @@ export default function Rutas() {
             const data = await response.json();
             
             if (data.exito) {
-                const rutasAprobadas = data.datos.filter(r => r.estado === 'aprobada');
+                const rutasAprobadas = data.datos.filter(r => r.estado === 'aprobada' || r.estado === 'en_ruta');
                 setRutas(rutasAprobadas);
             }
         } catch (error) {
@@ -49,23 +49,38 @@ export default function Rutas() {
         if (!selectedRuta) return;
 
         const origenLat = parseFloat(selectedRuta.origen_lat);
-        const destinoLat = parseFloat(selectedRuta.lat_destino);
-
-        if (origenLat && destinoLat && origenLat !== 0 && destinoLat !== 0 && window.google) {
-            const directionsService = new window.google.maps.DirectionsService();
-            directionsService.route({
-                origin: { lat: origenLat, lng: parseFloat(selectedRuta.origen_lng) },
-                destination: { lat: destinoLat, lng: parseFloat(selectedRuta.lng_destino) },
-                travelMode: window.google.maps.TravelMode.DRIVING
-            }, (result, status) => {
-                if (status === window.google.maps.DirectionsStatus.OK) {
-                    setDirectionsResult(result);
-                }
-            });
-        } else {
+        
+        const paradas = selectedRuta.paradas || [];
+        
+        if (paradas.length === 0 || !origenLat || origenLat === 0 || !window.google) {
             setDirectionsResult(null);
+            return;
         }
-    }, [selectedRuta?.origen_lat, selectedRuta?.lat_destino]);
+
+        const ultimaParada = paradas[paradas.length - 1];
+        const destinoLat = parseFloat(ultimaParada.latDestino);
+
+        const waypointsIntermedios = [];
+        for (let i = 0; i < paradas.length - 1; i++) {
+            waypointsIntermedios.push({
+                location: { lat: parseFloat(paradas[i].latDestino), lng: parseFloat(paradas[i].lngDestino) },
+                stopover: true
+            });
+        }
+
+        const directionsService = new window.google.maps.DirectionsService();
+        directionsService.route({
+            origin: { lat: origenLat, lng: parseFloat(selectedRuta.origen_lng) },
+            destination: { lat: destinoLat, lng: parseFloat(ultimaParada.lngDestino) },
+            waypoints: waypointsIntermedios,
+            travelMode: window.google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+            if (status === window.google.maps.DirectionsStatus.OK) {
+                setDirectionsResult(result);
+            }
+        });
+
+    }, [selectedRuta?.origen_lat, selectedRuta?.paradas]);
 
     const handleCerrarModal = () => {
         setSelectedRuta(null);
@@ -78,9 +93,11 @@ export default function Rutas() {
     };
 
     let centerLat = 14.6208; let centerLng = -90.5431;
-    if (selectedRuta?.lat_destino && parseFloat(selectedRuta.lat_destino) !== 0) {
-        centerLat = parseFloat(selectedRuta.lat_destino);
-        centerLng = parseFloat(selectedRuta.lng_destino);
+    
+    if (selectedRuta?.paradas && selectedRuta.paradas.length > 0) {
+        const up = selectedRuta.paradas[selectedRuta.paradas.length - 1];
+        centerLat = parseFloat(up.latDestino);
+        centerLng = parseFloat(up.lngDestino);
     } else if (selectedRuta?.origen_lat && parseFloat(selectedRuta.origen_lat) !== 0) {
         centerLat = parseFloat(selectedRuta.origen_lat);
         centerLng = parseFloat(selectedRuta.origen_lng);
@@ -120,7 +137,14 @@ export default function Rutas() {
                                 <tr key={ruta.id} style={{ borderBottom: '1px solid #eaecf0' }}>
                                     <td style={{ padding: '16px 20px', fontSize: '14px', color: '#344054' }}>{ruta.id}</td>
                                     <td style={{ padding: '16px 20px', fontSize: '14px', color: '#101828', fontWeight: '600' }}>{ruta.vendedor}</td>
-                                    <td style={{ padding: '16px 20px', fontSize: '14px', color: '#344054' }}>{ruta.nombre_cliente}</td>
+                                    <td style={{ padding: '16px 20px', fontSize: '14px', color: '#344054' }}>
+                                        {ruta.nombre_cliente} 
+                                        {ruta.paradas && ruta.paradas.length > 1 && (
+                                            <span style={{ display: 'block', fontSize: '11px', color: '#667085', marginTop: '4px' }}>
+                                                {ruta.paradas.length} paradas en total
+                                            </span>
+                                        )}
+                                    </td>
                                     <td style={{ padding: '16px 20px' }}>
                                         <span style={{ background: '#e6f5ed', color: '#0d945b', padding: '4px 10px', borderRadius: '16px', fontSize: '12px', fontWeight: '600' }}>
                                             {ruta.estado}
@@ -160,9 +184,9 @@ export default function Rutas() {
                                 ⚠ Esperando que la app móvil envíe la ubicación GPS actual del vendedor para trazar la línea...
                             </div>
                         )}
-                        {(!selectedRuta.lat_destino || parseFloat(selectedRuta.lat_destino) === 0) && (
+                        {(!selectedRuta.paradas || selectedRuta.paradas.length === 0) && (
                             <div style={{ padding: '10px 24px', background: '#fff5df', color: '#b54708', fontSize: '13px', fontWeight: '600' }}>
-                                ⚠ El destino se guardó sin coordenadas. El vendedor no usó la lupa de Google al crear la ruta.
+                                ⚠ El destino se guardó sin coordenadas.
                             </div>
                         )}
 
@@ -177,8 +201,11 @@ export default function Rutas() {
                                     {directionsResult && (
                                         <DirectionsRenderer directions={directionsResult} options={{ suppressMarkers: true, polylineOptions: { strokeColor: '#1570ef', strokeWeight: 5 } }} />
                                     )}
-                                    {selectedRuta.lat_destino && parseFloat(selectedRuta.lat_destino) !== 0 && (
-                                        <MarkerF position={{ lat: parseFloat(selectedRuta.lat_destino), lng: parseFloat(selectedRuta.lng_destino) }} />
+                                    {selectedRuta.paradas && selectedRuta.paradas.length > 0 && (
+                                        <MarkerF position={{ 
+                                            lat: parseFloat(selectedRuta.paradas[selectedRuta.paradas.length - 1].latDestino), 
+                                            lng: parseFloat(selectedRuta.paradas[selectedRuta.paradas.length - 1].lngDestino) 
+                                        }} />
                                     )}
                                     {selectedRuta.origen_lat && parseFloat(selectedRuta.origen_lat) !== 0 && (
                                         <MarkerF position={{ lat: parseFloat(selectedRuta.origen_lat), lng: parseFloat(selectedRuta.origen_lng) }} icon={getVendorIcon()} />

@@ -16,7 +16,9 @@ export default function Trafico() {
     const directionsService = new window.google.maps.DirectionsService();
     
     const promesas = rutasDb.map(async (ruta) => {
-      if (!ruta.origen_lat || !ruta.lat_destino || parseFloat(ruta.lat_destino) === 0) {
+      const paradas = ruta.paradas || [];
+      
+      if (!ruta.origen_lat || parseFloat(ruta.origen_lat) === 0 || paradas.length === 0) {
         return {
           ...ruta,
           detalleETA: 'Esperando coordenadas de origen o destino para evaluar.',
@@ -36,12 +38,23 @@ export default function Trafico() {
 
       try {
         const origenConfig = { lat: parseFloat(ruta.origen_lat), lng: parseFloat(ruta.origen_lng) };
-        const destinoConfig = { lat: parseFloat(ruta.lat_destino), lng: parseFloat(ruta.lng_destino) };
+        
+        const ultimaParada = paradas[paradas.length - 1];
+        const destinoConfig = { lat: parseFloat(ultimaParada.latDestino), lng: parseFloat(ultimaParada.lngDestino) };
+
+        const waypointsIntermedios = [];
+        for (let i = 0; i < paradas.length - 1; i++) {
+            waypointsIntermedios.push({
+                location: { lat: parseFloat(paradas[i].latDestino), lng: parseFloat(paradas[i].lngDestino) },
+                stopover: true
+            });
+        }
 
         return new Promise((resolve) => {
           directionsService.route({
             origin: origenConfig,
             destination: destinoConfig,
+            waypoints: waypointsIntermedios,
             travelMode: window.google.maps.TravelMode.DRIVING,
             drivingOptions: {
               departureTime: new Date(),
@@ -49,23 +62,32 @@ export default function Trafico() {
             }
           }, (result, status) => {
             if (status === window.google.maps.DirectionsStatus.OK) {
-              const leg = result.routes[0].legs[0];
+              let totalDuration = 0;
+              let totalTraffic = 0;
+              let totalDistanceMeters = 0;
               
-              const durationOriginalText = leg.duration.text;
-              const durationTrafficText = leg.duration_in_traffic ? leg.duration_in_traffic.text : durationOriginalText;
+              result.routes[0].legs.forEach(leg => {
+                  totalDuration += leg.duration.value;
+                  totalTraffic += leg.duration_in_traffic ? leg.duration_in_traffic.value : leg.duration.value;
+                  totalDistanceMeters += leg.distance.value;
+              });
               
-              const durationValue = leg.duration.value;
-              const trafficValue = leg.duration_in_traffic ? leg.duration_in_traffic.value : durationValue;
+              const diffMinutes = (totalTraffic - totalDuration) / 60;
+              const distanceKm = (totalDistanceMeters / 1000).toFixed(1);
               
-              const diferenciaMinutos = (trafficValue - durationValue) / 60;
+              const formatTime = (secs) => {
+                  const h = Math.floor(secs / 3600);
+                  const m = Math.floor((secs % 3600) / 60);
+                  return h > 0 ? `${h}h ${m}m` : `${m} mins`;
+              };
 
               let estadoBoton = '';
               let estiloBoton = {};
               
-              if (diferenciaMinutos > 15) {
+              if (diffMinutes > 15) {
                 estadoBoton = 'Justificado (Tráfico)';
                 estiloBoton = { bg: '#e6f5ed', color: '#0d945b' };
-              } else if (diferenciaMinutos < -5) {
+              } else if (diffMinutes < -5) {
                 estadoBoton = 'Vía rápida';
                 estiloBoton = { bg: '#eff8ff', color: '#175cd3' };
               } else {
@@ -75,7 +97,7 @@ export default function Trafico() {
 
               resolve({
                 ...ruta,
-                detalleETA: `ETA original ${durationOriginalText} · ETA con tráfico ${durationTrafficText} · Aprox a ${leg.distance.text}`,
+                detalleETA: `ETA original ${formatTime(totalDuration)} · ETA actual ${formatTime(totalTraffic)} · Total ${distanceKm} km`,
                 estadoBoton,
                 estiloBoton
               });
@@ -116,7 +138,7 @@ export default function Trafico() {
         const data = await response.json();
 
         if (data.exito) {
-          const rutasActivas = data.datos.filter(r => r.estado === 'aprobada' || r.estado === 'pendiente');
+          const rutasActivas = data.datos.filter(r => r.estado === 'aprobada' || r.estado === 'pendiente' || r.estado === 'en_ruta');
           const rutasEvaluadas = await calcularTraficoReal(rutasActivas);
           setRutasTrafico(rutasEvaluadas);
         }
@@ -182,8 +204,8 @@ export default function Trafico() {
                 </div>
                 
                 <span style={{ 
-                  background: ruta.estiloBoton.bg, 
-                  color: ruta.estiloBoton.color, 
+                  background: ruta.estiloBoton?.bg ? ruta.estiloBoton.bg : '#f2f4f7', 
+                  color: ruta.estiloBoton?.color ? ruta.estiloBoton.color : '#344054', 
                   padding: '6px 14px', borderRadius: '16px', fontSize: '12px', fontWeight: '700' 
                 }}>
                   {ruta.estadoBoton}
@@ -192,9 +214,6 @@ export default function Trafico() {
             ))
           )}
         </div>
-
-        
-
       </div>
     </div>
   );
