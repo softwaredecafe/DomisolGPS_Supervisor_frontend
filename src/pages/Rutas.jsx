@@ -49,7 +49,6 @@ export default function Rutas() {
         if (!selectedRuta) return;
 
         const origenLat = parseFloat(selectedRuta.origen_lat);
-        
         const paradas = selectedRuta.paradas || [];
         
         if (paradas.length === 0 || !origenLat || origenLat === 0 || !window.google) {
@@ -201,12 +200,23 @@ export default function Rutas() {
                                     {directionsResult && (
                                         <DirectionsRenderer directions={directionsResult} options={{ suppressMarkers: true, polylineOptions: { strokeColor: '#1570ef', strokeWeight: 5 } }} />
                                     )}
-                                    {selectedRuta.paradas && selectedRuta.paradas.length > 0 && (
-                                        <MarkerF position={{ 
-                                            lat: parseFloat(selectedRuta.paradas[selectedRuta.paradas.length - 1].latDestino), 
-                                            lng: parseFloat(selectedRuta.paradas[selectedRuta.paradas.length - 1].lngDestino) 
-                                        }} />
-                                    )}
+                                    
+                                    {selectedRuta.paradas && selectedRuta.paradas.map((parada, index) => (
+                                        <MarkerF 
+                                            key={`parada-${index}`}
+                                            position={{ 
+                                                lat: parseFloat(parada.latDestino), 
+                                                lng: parseFloat(parada.lngDestino) 
+                                            }}
+                                            label={{
+                                                text: (index + 1).toString(),
+                                                color: 'white',
+                                                fontWeight: 'bold',
+                                                fontSize: '14px'
+                                            }}
+                                        />
+                                    ))}
+
                                     {selectedRuta.origen_lat && parseFloat(selectedRuta.origen_lat) !== 0 && (
                                         <MarkerF position={{ lat: parseFloat(selectedRuta.origen_lat), lng: parseFloat(selectedRuta.origen_lng) }} icon={getVendorIcon()} />
                                     )}
