@@ -9,6 +9,7 @@ import MapaGeneral from './pages/MapaGeneral';
 import LoginAdmin from './pages/LoginAdmin';
 import Trafico from './pages/Trafico';
 import Alertas from './pages/Alertas'; 
+import Reportes from './pages/Reportes';
 
 const Placeholder = ({ title, sub }) => (
   <section className="section active">
@@ -64,7 +65,7 @@ export default function App() {
             
             <Route path="/trafico" element={<Trafico />}/>
             <Route path="/alertas" element={<Alertas />} />
-            <Route path="/reportes" element={<Placeholder title="Resumen operativo por tienda" sub="Los indicadores se calculan con el personal asignado" />} />
+            <Route path="/reportes" element={<Reportes />} />
           </Routes>
         </main>
       </div>
