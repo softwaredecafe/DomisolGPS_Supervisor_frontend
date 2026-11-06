@@ -88,7 +88,7 @@ export default function Dashboard() {
   }, [map, vendedores, visitas]);
 
   const getDotIcon = (vendedor) => {
-    let color = '#1570ef'; 
+    let color = '#1570ef';
     const r = (vendedor.rol || '').toLowerCase();
     
     if (vendedor.minutos_inactivo > 5) color = '#8792a3';
@@ -130,13 +130,34 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.exito) {
             setRutasPendientes(prev => prev.filter(r => String(r.vendedor_id || 1) !== String(vendedorId)));
-            alert("¡Ruta aprobada! Revisa el celular del vendedor.");
+            alert("¡Ruta aprobada! El vendedor ya puede iniciar la navegación.");
         } else {
             alert("El servidor respondió, pero hubo un error: " + data.mensaje);
         }
     } catch (error) {
         console.error("Error al aprobar ruta:", error);
         alert("Error de conexión al aprobar la ruta.");
+    }
+  };
+
+  const handleRechazarRuta = async (rutaCompleta) => {
+    if (!window.confirm(`¿Estás seguro de RECHAZAR la ruta de ${rutaCompleta.vendedor}?`)) return;
+
+    const vendedorId = rutaCompleta.vendedor_id || rutaCompleta.id_vendedor || 1;
+
+    try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rutas/cancelar/${vendedorId}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.exito) {
+            setRutasPendientes(prev => prev.filter(r => String(r.vendedor_id || 1) !== String(vendedorId)));
+        } else {
+            alert("El servidor respondió, pero hubo un error: " + data.mensaje);
+        }
+    } catch (error) {
+        console.error("Error al rechazar ruta:", error);
+        alert("Error de conexión al rechazar la ruta.");
     }
   };
 
@@ -180,7 +201,7 @@ export default function Dashboard() {
 
           <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
             {rutasPendientes.map((ruta) => (
-              <div key={`ruta-${ruta.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
+              <div key={`ruta-${ruta.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr auto', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
                 <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor</span><br/><b style={{ fontSize: '13px' }}>{ruta.vendedor}</b></div>
                 <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Destino</span><br/><b style={{ fontSize: '13px' }}>{ruta.nombre_cliente}</b></div>
                 <div>
@@ -191,11 +212,18 @@ export default function Dashboard() {
                       : ruta.direccion}
                   </b>
                 </div>
-                <button 
-                  onClick={() => handleAprobarRuta(ruta)}
-                  style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                  Aprobar Ruta
-                </button>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  <button 
+                    onClick={() => handleRechazarRuta(ruta)}
+                    style={{ background: 'white', color: '#d92d20', border: '1px solid #fda29b', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Rechazar
+                  </button>
+                  <button 
+                    onClick={() => handleAprobarRuta(ruta)}
+                    style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Aprobar Ruta
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -331,6 +359,19 @@ export default function Dashboard() {
                 else if (r.includes('asesor mayoreo')) badgeColor = '#2f6b00';
                 else if (r.includes('mayoreo')) badgeColor = '#12b76a';
 
+                let minutosFormato = '';
+                if (vendedor.minutos_inactivo >= 9999) {
+                  minutosFormato = 'Sin registros GPS';
+                } else if (vendedor.minutos_inactivo === 0) {
+                  minutosFormato = 'En línea';
+                } else if (vendedor.minutos_inactivo >= 60) {
+                  const horas = Math.floor(vendedor.minutos_inactivo / 60);
+                  const minRestantes = vendedor.minutos_inactivo % 60;
+                  minutosFormato = `Hace ${horas}h ${minRestantes}m`;
+                } else {
+                  minutosFormato = `Hace ${vendedor.minutos_inactivo} minutos`;
+                }
+
                 return (
                   <div key={vendedor.id} style={{ display: 'flex', alignItems: 'center', padding: '10px', border: '1px solid #dcdde1', borderRadius: '8px' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f8f9fa', border: `2px solid ${vendedor.minutos_inactivo > 5 ? '#8792a3' : badgeColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#2f3640', marginRight: '15px' }}>
@@ -338,8 +379,8 @@ export default function Dashboard() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: '600', color: '#2f3640' }}>{vendedor.nombre}</div>
-                      <div style={{ fontSize: '11px', color: '#7f8fa6' }}>
-                        {vendedor.minutos_inactivo >= 9999 ? 'Sin registros GPS' : `Hace ${vendedor.minutos_inactivo} minutos`}
+                      <div style={{ fontSize: '11px', color: vendedor.minutos_inactivo === 0 ? '#1f9d63' : '#7f8fa6', fontWeight: vendedor.minutos_inactivo === 0 ? '600' : 'normal' }}>
+                        {minutosFormato}
                       </div>
                     </div>
                     <span className="pill" style={{ background: vendedor.minutos_inactivo > 5 ? '#f1f2f6' : '#e8f8f5', color: vendedor.minutos_inactivo > 5 ? '#7f8fa6' : '#1abc9c', fontSize: '11px', padding: '4px 8px', borderRadius: '12px' }}>
