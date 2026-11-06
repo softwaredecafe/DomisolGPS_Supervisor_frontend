@@ -138,7 +138,7 @@ export default function Dashboard() {
               <div key={`panel-${v.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
                 <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Cliente</span><br/><b style={{ fontSize: '13px' }}>{v.nombre_cliente}</b></div>
                 <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor</span><br/><b style={{ fontSize: '13px' }}>{v.vendedor}</b></div>
-                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Hora</span><br/><b style={{ fontSize: '13px' }}>{new Date(v.fecha_visita).toLocaleTimeString()}</b></div>
+                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Hora</span><br/><b style={{ fontSize: '13px' }}>{v.hora_formateada}</b></div>
                 <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Dirección</span><br/><b style={{ fontSize: '11px' }}>{v.direccion || 'Coordenada GPS'}</b></div>
               </div>
             ))
@@ -262,7 +262,7 @@ export default function Dashboard() {
                           <b style={{ fontSize: '14px', color: '#1f9d63', display: 'block' }}>Visita: {selectedMarker.datos.nombre_cliente}</b>
                           <div style={{ marginTop: '5px', color: '#6b7485', fontSize: '12px' }}>
                             <b>Atendido por:</b> {selectedMarker.datos.vendedor}<br/>
-                            <b>Hora:</b> {new Date(selectedMarker.datos.fecha_visita).toLocaleTimeString()}
+                            <b>Hora:</b> {selectedMarker.datos.hora_formateada || new Date(selectedMarker.datos.fecha_visita).toLocaleTimeString()}
                           </div>
                         </>
                       )}
