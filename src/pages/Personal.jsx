@@ -56,7 +56,7 @@ export default function Personal() {
         });
       }
     } catch (error) {
-        setUltimaSync('Error de conexión');
+      setUltimaSync('Error de conexión');
     }
   };
 
@@ -160,8 +160,8 @@ export default function Personal() {
 
   const getAvatarBorder = (rol) => {
     const rolSeguro = rol || '';
-    if (rolSeguro.toLowerCase().includes('gerente')) return '#fdb022'; 
-    if (rolSeguro.toLowerCase().includes('mayoreo')) return '#12b76a'; 
+    if (rolSeguro.toLowerCase().includes('gerente')) return '#fdb022';
+    if (rolSeguro.toLowerCase().includes('mayoreo')) return '#12b76a';
     return '#1570ef'; 
   };
 
@@ -233,9 +233,9 @@ export default function Personal() {
                     <div style={{ fontSize: '12px', color: '#667085' }}>{tiendas[nombreTienda].length} integrantes asignados</div>
                   </div>
                   <div style={{ fontSize: '11px', fontWeight: '600', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {numAsesores > 0 && <span style={{ color: '#1570ef' }}>{numAsesores} asesores</span>}
-                    {numGerentes > 0 && <span style={{ color: '#fdb022' }}>{numGerentes} gerentes</span>}
-                    {numMayoreo > 0 && <span style={{ color: '#12b76a' }}>{numMayoreo} mayoreo</span>}
+                    {numAsesores > 0 && <span style={{ color: '#1570ef' }}>{numAsesores} asr</span>}
+                    {numGerentes > 0 && <span style={{ color: '#fdb022' }}>{numGerentes} gte</span>}
+                    {numMayoreo > 0 && <span style={{ color: '#12b76a' }}>{numMayoreo} mayo</span>}
                   </div>
                 </div>
 
