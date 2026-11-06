@@ -87,8 +87,19 @@ export default function Dashboard() {
     }
   }, [map, vendedores, visitas]);
 
-  const getDotIcon = (inactivo) => {
-    const color = inactivo ? '#8792a3' : '#2573d8';
+  const getDotIcon = (vendedor) => {
+    if (vendedor.minutos_inactivo > 5) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25"><circle cx="12" cy="12" r="10" fill="#8792a3" stroke="white" stroke-width="3"/></svg>`;
+      return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
+    }
+
+    const r = (vendedor.rol || '').toLowerCase();
+    let color = '#1570ef'; 
+    if (r.includes('gerente')) color = '#fdb022';
+    if (r.includes('supervis')) color = '#ed3f00';
+    if (r.includes('asesor mayoreo')) color = '#2f6b00'; 
+    else if (r.includes('mayoreo')) color = '#12b76a'; 
+
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="3"/></svg>`;
     return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
   };
@@ -159,9 +170,16 @@ export default function Dashboard() {
           <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
             {rutasPendientes.map((ruta) => (
               <div key={`ruta-${ruta.id}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px', background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #dcdde1', alignItems: 'center' }}>
-                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor ID</span><br/><b style={{ fontSize: '13px' }}>{ruta.vendedor_id}</b></div>
+                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Vendedor</span><br/><b style={{ fontSize: '13px' }}>{ruta.vendedor}</b></div>
                 <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Destino</span><br/><b style={{ fontSize: '13px' }}>{ruta.nombre_cliente}</b></div>
-                <div><span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Dirección</span><br/><b style={{ fontSize: '11px' }}>{ruta.direccion}</b></div>
+                <div>
+                  <span style={{ fontSize: '10px', color: '#7f8fa6', textTransform: 'uppercase' }}>Paradas / Dirección</span><br/>
+                  <b style={{ fontSize: '11px' }}>
+                    {ruta.paradas && ruta.paradas.length > 0 
+                      ? ruta.paradas.map(p => p.nombre).join(', ') 
+                      : ruta.direccion}
+                  </b>
+                </div>
                 <button 
                   onClick={() => handleAprobarRuta(ruta)}
                   style={{ background: '#1f9d63', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
@@ -222,7 +240,7 @@ export default function Dashboard() {
                     <MarkerF 
                       key={`ven-${vendedor.id}`} 
                       position={{ lat: parseFloat(vendedor.latitud), lng: parseFloat(vendedor.longitud) }}
-                      icon={getDotIcon(vendedor.minutos_inactivo > 5)}
+                      icon={getDotIcon(vendedor)}
                       onClick={() => setSelectedMarker({ tipo: 'vendedor', datos: vendedor })}
                     />
                   );
@@ -287,22 +305,31 @@ export default function Dashboard() {
             {vendedores.length === 0 ? (
                <div style={{ padding: '15px', color: '#8792a3', fontSize: '14px', border: '1px dashed #e4e8ef', borderRadius: '12px', textAlign: 'center' }}>Esperando señal GPS...</div>
             ) : (
-              vendedores.map((vendedor) => (
-                <div key={vendedor.id} style={{ display: 'flex', alignItems: 'center', padding: '10px', border: '1px solid #dcdde1', borderRadius: '8px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f8f9fa', border: `2px solid ${vendedor.minutos_inactivo > 5 ? '#8792a3' : '#2573d8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#2f3640', marginRight: '15px' }}>
-                    {vendedor.nombre.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '600', color: '#2f3640' }}>{vendedor.nombre}</div>
-                    <div style={{ fontSize: '11px', color: '#7f8fa6' }}>
-                      {vendedor.minutos_inactivo >= 9999 ? 'Sin registros GPS' : `Hace ${vendedor.minutos_inactivo} minutos`}
+              vendedores.map((vendedor) => {
+                let badgeColor = '#1570ef'; 
+                const r = (vendedor.rol || '').toLowerCase();
+                if (r.includes('gerente')) badgeColor = '#fdb022';
+                else if (r.includes('supervis')) badgeColor = '#ed3f00';
+                else if (r.includes('asesor mayoreo')) badgeColor = '#2f6b00';
+                else if (r.includes('mayoreo')) badgeColor = '#12b76a';
+
+                return (
+                  <div key={vendedor.id} style={{ display: 'flex', alignItems: 'center', padding: '10px', border: '1px solid #dcdde1', borderRadius: '8px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f8f9fa', border: `2px solid ${vendedor.minutos_inactivo > 5 ? '#8792a3' : badgeColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#2f3640', marginRight: '15px' }}>
+                      {vendedor.nombre.substring(0, 2).toUpperCase()}
                     </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: '#2f3640' }}>{vendedor.nombre}</div>
+                      <div style={{ fontSize: '11px', color: '#7f8fa6' }}>
+                        {vendedor.minutos_inactivo >= 9999 ? 'Sin registros GPS' : `Hace ${vendedor.minutos_inactivo} minutos`}
+                      </div>
+                    </div>
+                    <span className="pill" style={{ background: vendedor.minutos_inactivo > 5 ? '#f1f2f6' : '#e8f8f5', color: vendedor.minutos_inactivo > 5 ? '#7f8fa6' : '#1abc9c', fontSize: '11px', padding: '4px 8px', borderRadius: '12px' }}>
+                      {vendedor.minutos_inactivo > 5 ? 'Sin reporte' : 'Reportando'}
+                    </span>
                   </div>
-                  <span className="pill" style={{ background: vendedor.minutos_inactivo > 5 ? '#f1f2f6' : '#e8f8f5', color: vendedor.minutos_inactivo > 5 ? '#7f8fa6' : '#1abc9c', fontSize: '11px', padding: '4px 8px', borderRadius: '12px' }}>
-                    {vendedor.minutos_inactivo > 5 ? 'Sin reporte' : 'Reportando'}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

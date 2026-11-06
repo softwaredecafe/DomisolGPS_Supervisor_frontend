@@ -16,7 +16,6 @@ export default function MapaGeneral() {
   });
 
   const [empleados, setEmpleados] = useState([]);
-  const [checkins, setCheckins] = useState([]);
   const [ultimaSync, setUltimaSync] = useState('Calculando...');
   
   const [map, setMap] = useState(null);
@@ -25,16 +24,10 @@ export default function MapaGeneral() {
   const cargarUbicaciones = async () => {
     try {
       const adminId = localStorage.getItem('admin_id');
-      const [resPersonal, resCheckins] = await Promise.all([
-      fetch(`${import.meta.env.VITE_API_URL}/api/personal/detallado`),
-      fetch(`${import.meta.env.VITE_API_URL}/api/visitas/todas-hoy`)
-      ]);
-      
+      const resPersonal = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/detallado?admin_id=${adminId}`);
       const dataPersonal = await resPersonal.json();
-      const dataCheckins = await resCheckins.json();
       
       if (dataPersonal.exito) setEmpleados(dataPersonal.datos || []);
-      if (dataCheckins.exito) setCheckins(dataCheckins.datos || []);
       
       setUltimaSync(`hace un momento (${new Date().toLocaleTimeString()})`);
     } catch (error) {
@@ -58,20 +51,13 @@ export default function MapaGeneral() {
   }, []);
 
   useEffect(() => {
-    if (map && (empleados.length > 0 || checkins.length > 0)) {
+    if (map && empleados.length > 0) {
       const bounds = new window.google.maps.LatLngBounds();
       let hayPuntos = false;
 
       empleados.forEach(emp => {
         if (emp.latitud && emp.longitud) {
           bounds.extend({ lat: parseFloat(emp.latitud), lng: parseFloat(emp.longitud) });
-          hayPuntos = true;
-        }
-      });
-
-      checkins.forEach(chk => {
-        if (chk.latitud && chk.longitud) {
-          bounds.extend({ lat: parseFloat(chk.latitud), lng: parseFloat(chk.longitud) });
           hayPuntos = true;
         }
       });
@@ -84,21 +70,18 @@ export default function MapaGeneral() {
         });
       }
     }
-  }, [map, empleados, checkins]);
+  }, [map, empleados]);
 
   const getMarkerIcon = (rol) => {
     const r = (rol || '').toLowerCase();
     let color = '#1570ef'; 
-    if (r.includes('gerente')) color = '#fdb022'; 
-    if (r.includes('supervis')) color = '#7a5af8'; 
+    if (r.includes('gerente')) color = '#fdb022';
+    if (r.includes('supervis')) color = '#ed3f00';
+    if (r.includes('asesor mayoreo')) color = '#2f6b00'; 
+    else if (r.includes('mayoreo')) color = '#12b76a'; 
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="3"/></svg>`;
     return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
-  };
-
-  const getCheckinIcon = () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28"><circle cx="14" cy="14" r="12" fill="#0d945b" stroke="white" stroke-width="3"/><path d="M9 14 l3 3 l7 -7" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(14, 14) };
   };
 
   return (
@@ -111,7 +94,7 @@ export default function MapaGeneral() {
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <span style={{ fontSize: '13px', color: '#667085', background: '#fff', padding: '6px 12px', borderRadius: '16px', border: '1px solid #eaecf0' }}>
-            {empleados.length} equipos · {checkins.length} visitas
+            {empleados.length} equipos
           </span>
           <span style={{ fontSize: '13px', color: '#667085' }}>Última actualización: {ultimaSync}</span>
         </div>
@@ -122,15 +105,15 @@ export default function MapaGeneral() {
         <div style={{ padding: '16px 24px', borderBottom: '1px solid #eaecf0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 1 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '16px', color: '#101828' }}>Mapa Operativo En Vivo (Google Maps)</h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#667085' }}>Ubicaciones azules (Personal) | Pines verdes (Check-ins de clientes)</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#667085' }}>Ubicaciones en tiempo real del personal</p>
           </div>
           
           <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#344054', background: '#f9fafb', padding: '8px 16px', borderRadius: '20px', border: '1px solid #eaecf0', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#1570ef', border: '2px solid #fff' }}></div> Asesor</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0ea5e9', border: '2px solid #fff' }}></div> Asesor Mayoreo</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fdb022', border: '2px solid #fff' }}></div> Gerente</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#12b76a', border: '2px solid #fff' }}></div> Mayoreo</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#7a5af8', border: '2px solid #fff' }}></div> Supervisión</div>
-            <div style={{ width: '1px', height: '16px', background: '#d0d5dd', margin: '0 4px' }}></div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0d945b', border: '2px solid #fff' }}></div> Check-in</div>
           </div>
         </div>
 
@@ -145,7 +128,7 @@ export default function MapaGeneral() {
               options={{ mapTypeControl: false, streetViewControl: false }}
             >
               {empleados.map((emp) => {
-                if (!emp.latitud || !emp.longitud) return null;
+                if (!emp.latitud || !emp.longitud || parseFloat(emp.latitud) === 0) return null;
                 return (
                   <MarkerF 
                     key={`emp-${emp.id}`} 
@@ -156,19 +139,7 @@ export default function MapaGeneral() {
                 );
               })}
 
-              {checkins.map((chk) => {
-                if (!chk.latitud || !chk.longitud) return null;
-                return (
-                  <MarkerF 
-                    key={`chk-${chk.id}`} 
-                    position={{ lat: parseFloat(chk.latitud), lng: parseFloat(chk.longitud) }}
-                    icon={getCheckinIcon()}
-                    onClick={() => setSelectedMarker({ tipo: 'checkin', datos: chk })}
-                  />
-                );
-              })}
-
-              {selectedMarker && (
+              {selectedMarker && selectedMarker.tipo === 'empleado' && (
                 <InfoWindowF
                   position={{ 
                     lat: parseFloat(selectedMarker.datos.latitud), 
@@ -177,23 +148,11 @@ export default function MapaGeneral() {
                   onCloseClick={() => setSelectedMarker(null)}
                 >
                   <div style={{ textAlign: 'center', minWidth: '150px', padding: '4px' }}>
-                    {selectedMarker.tipo === 'empleado' ? (
-                      <>
-                        <strong style={{ display: 'block', fontSize: '15px', color: '#101828' }}>{selectedMarker.datos.nombre}</strong>
-                        <span style={{ color: '#667085', fontSize: '12px' }}>{selectedMarker.datos.tienda || 'Sin Tienda'} · {selectedMarker.datos.rol || 'Asesor'}</span>
-                        <div style={{ marginTop: '8px', padding: '6px', background: '#f9fafb', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: '1px solid #eaecf0', color: '#344054' }}>
-                          Estado: {selectedMarker.datos.estado || 'En ruta'}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <strong style={{ display: 'block', fontSize: '15px', color: '#101828' }}>{selectedMarker.datos.nombre_cliente}</strong>
-                        <span style={{ color: '#667085', fontSize: '12px' }}>Vendedor: {selectedMarker.datos.vendedor}</span>
-                        <div style={{ marginTop: '8px', padding: '6px', background: '#e6f5ed', color: '#0d945b', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: '1px solid #a6f4c5' }}>
-                          {selectedMarker.datos.hora} - {selectedMarker.datos.resultado}
-                        </div>
-                      </>
-                    )}
+                    <strong style={{ display: 'block', fontSize: '15px', color: '#101828' }}>{selectedMarker.datos.nombre}</strong>
+                    <span style={{ color: '#667085', fontSize: '12px' }}>{selectedMarker.datos.tienda || 'Sin Tienda'} · {selectedMarker.datos.rol || 'Asesor'}</span>
+                    <div style={{ marginTop: '8px', padding: '6px', background: '#f9fafb', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: '1px solid #eaecf0', color: '#344054' }}>
+                      Estado: {selectedMarker.datos.estado || 'En ruta'}
+                    </div>
                   </div>
                 </InfoWindowF>
               )}
