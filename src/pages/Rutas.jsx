@@ -72,6 +72,7 @@ export default function Rutas() {
             origin: { lat: origenLat, lng: parseFloat(selectedRuta.origen_lng) },
             destination: { lat: destinoLat, lng: parseFloat(ultimaParada.lngDestino) },
             waypoints: waypointsIntermedios,
+            optimizeWaypoints: false, 
             travelMode: window.google.maps.TravelMode.DRIVING
         }, (result, status) => {
             if (status === window.google.maps.DirectionsStatus.OK) {
