@@ -417,8 +417,9 @@ export default function Personal() {
                 >
                   <option value="">Selecciona un cargo</option>
                   <option value="Asesor">Asesor</option>
+                  <option value="Asesor Mayoreo">Asesor Mayoreo</option>
                   <option value="Gerente">Gerente</option>
-                  <option value="Mayoreo">Mayoreo</option>
+                  <option value="Mayoreo">Mayoreo (Admin Web)</option>
                   <option value="Supervisor">Supervisor</option>
                 </select>
               </div>
