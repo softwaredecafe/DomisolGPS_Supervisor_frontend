@@ -25,7 +25,7 @@ export default function Personal() {
   const [mensajeModal, setMensajeModal] = useState('');
 
   const rolAdmin = localStorage.getItem('admin_rol') || '';
-  const esSupervisor = rolAdmin.toLowerCase().includes('supervis');
+  const esSuper = rolAdmin.toLowerCase() === 'super';
 
   const cargarPersonal = async () => {
     try {
@@ -56,7 +56,7 @@ export default function Personal() {
         });
       }
     } catch (error) {
-      setUltimaSync('Error de conexión');
+        setUltimaSync('Error de conexión');
     }
   };
 
@@ -160,7 +160,9 @@ export default function Personal() {
 
   const getAvatarBorder = (rol) => {
     const rolSeguro = rol || '';
-    return rolSeguro.toLowerCase().includes('gerente') ? '#fdb022' : '#1570ef'; 
+    if (rolSeguro.toLowerCase().includes('gerente')) return '#fdb022'; 
+    if (rolSeguro.toLowerCase().includes('mayoreo')) return '#12b76a'; 
+    return '#1570ef'; 
   };
 
   const obtenerIniciales = (nombre) => {
@@ -188,7 +190,7 @@ export default function Personal() {
           </span>
           <span style={{ fontSize: '13px', color: '#667085' }}>Última actualización: {ultimaSync}</span>
           
-          {esSupervisor && (
+          {esSuper && (
             <button 
               onClick={handleAbrirCrear}
               style={{ background: '#1570ef', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
@@ -219,8 +221,9 @@ export default function Personal() {
           </div>
 
           {Object.keys(tiendas).map(nombreTienda => {
-            const numAsesores = tiendas[nombreTienda].filter(e => !(e.rol || 'Asesor').toLowerCase().includes('gerente')).length;
+            const numAsesores = tiendas[nombreTienda].filter(e => !(e.rol || 'Asesor').toLowerCase().includes('gerente') && !(e.rol || 'Asesor').toLowerCase().includes('mayoreo')).length;
             const numGerentes = tiendas[nombreTienda].filter(e => (e.rol || 'Asesor').toLowerCase().includes('gerente')).length;
+            const numMayoreo = tiendas[nombreTienda].filter(e => (e.rol || 'Asesor').toLowerCase().includes('mayoreo')).length;
 
             return (
               <div key={nombreTienda} style={{ marginBottom: '24px' }}>
@@ -232,6 +235,7 @@ export default function Personal() {
                   <div style={{ fontSize: '11px', fontWeight: '600', display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {numAsesores > 0 && <span style={{ color: '#1570ef' }}>{numAsesores} asesores</span>}
                     {numGerentes > 0 && <span style={{ color: '#fdb022' }}>{numGerentes} gerentes</span>}
+                    {numMayoreo > 0 && <span style={{ color: '#12b76a' }}>{numMayoreo} mayoreo</span>}
                   </div>
                 </div>
 
@@ -296,7 +300,7 @@ export default function Personal() {
                
                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                  
-                 {esSupervisor && (
+                 {esSuper && (
                    <>
                      <button 
                        onClick={() => handleAbrirEditar(selectedEmp)}
@@ -414,6 +418,7 @@ export default function Personal() {
                   <option value="">Selecciona un cargo</option>
                   <option value="Asesor">Asesor</option>
                   <option value="Gerente">Gerente</option>
+                  <option value="Mayoreo">Mayoreo</option>
                   <option value="Supervisor">Supervisor</option>
                 </select>
               </div>

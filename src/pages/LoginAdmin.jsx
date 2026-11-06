@@ -11,12 +11,11 @@ const handleSubmit = async (e) => {
     setError('');
     setLoading(true);
 
-    
     if (usuario === 'super' && password === '123') {
       localStorage.setItem('admin_id', '999');
-      localStorage.setItem('admin_nombre', 'Antonio (Supervisor)');
-      localStorage.setItem('admin_rol', 'supervisor');
-      onLogin('supervisor');
+      localStorage.setItem('admin_nombre', 'Alex (Super Admin)');
+      localStorage.setItem('admin_rol', 'super');
+      onLogin('super');
       return; 
     }
     
@@ -25,6 +24,14 @@ const handleSubmit = async (e) => {
       localStorage.setItem('admin_nombre', 'Carlos (Gerente)');
       localStorage.setItem('admin_rol', 'gerente');
       onLogin('gerente');
+      return; 
+    }
+
+    if (usuario === 'mayoreo' && password === '123') {
+      localStorage.setItem('admin_id', '777');
+      localStorage.setItem('admin_nombre', 'Luis (Mayoreo)');
+      localStorage.setItem('admin_rol', 'mayoreo');
+      onLogin('mayoreo');
       return; 
     }
 
@@ -60,7 +67,7 @@ const handleSubmit = async (e) => {
           DM
         </div>
         <h1 style={{ margin: '0 0 10px', color: '#172033' }}>Portal Administrativo</h1>
-        <p style={{ color: '#6b7485', marginBottom: '30px' }}>Acceso exclusivo para Gerentes y Supervisores.</p>
+        <p style={{ color: '#6b7485', marginBottom: '30px' }}>Acceso exclusivo para Gerentes, Mayoreo y Supervisión.</p>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left' }}>
           <div>
