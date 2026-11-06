@@ -13,7 +13,7 @@ export default function Sidebar({ userRole, onLogout }) {
         </div>
       </div>
       
-      <div className="nav">
+      <div className="nav" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <NavLink to="/" className={({isActive}) => isActive ? "active" : ""}>▣ Dashboard</NavLink>
         <NavLink to="/mapa" className={({isActive}) => isActive ? "active" : ""}>⌖ Mapa general</NavLink>
         
@@ -24,7 +24,24 @@ export default function Sidebar({ userRole, onLogout }) {
         <NavLink to="/alertas" className={({isActive}) => isActive ? "active" : ""}>⚠ Alertas</NavLink>
         <NavLink to="/reportes" className={({isActive}) => isActive ? "active" : ""}>◷ Reportes</NavLink>
         
-        <button onClick={onLogout} style={{ marginTop: '20px', color: '#ff6b6b' }}>
+        <button 
+          onClick={onLogout} 
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            color: '#98a2b3', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontFamily: 'inherit',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            transition: 'color 0.2s ease'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.color = '#f04438'} 
+          onMouseOut={(e) => e.currentTarget.style.color = '#98a2b3'}
+        >
           ⎋ Cerrar Sesión
         </button>
       </div>
