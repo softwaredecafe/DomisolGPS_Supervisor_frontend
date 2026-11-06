@@ -103,6 +103,43 @@ export default function Rutas() {
         centerLng = parseFloat(selectedRuta.origen_lng);
     }
 
+    const orderWaypoints = (directionsResult) => {
+        if (!directionsResult || !directionsResult.routes || !directionsResult.routes[0]) return [];
+        
+        const route = directionsResult.routes[0];
+        const orderedWaypoints = [];
+        
+        if (route.waypoint_order && route.waypoint_order.length > 0) {
+            route.waypoint_order.forEach((index, i) => {
+                const paradaOriginal = selectedRuta.paradas[index];
+                if (paradaOriginal) {
+                    orderedWaypoints.push({
+                        ...paradaOriginal,
+                        displayNumber: i + 1 
+                    });
+                }
+            });
+            
+            const lastIndex = selectedRuta.paradas.length - 1;
+            const lastStop = selectedRuta.paradas[lastIndex];
+            if (lastStop) {
+                orderedWaypoints.push({
+                    ...lastStop,
+                    displayNumber: orderedWaypoints.length + 1
+                });
+            }
+            return orderedWaypoints;
+        } else {
+             return selectedRuta.paradas.map((p, i) => ({
+                 ...p,
+                 displayNumber: i + 1
+             }));
+        }
+    };
+    
+    const paradasOrdenadas = directionsResult ? orderWaypoints(directionsResult) : (selectedRuta?.paradas || []).map((p, i) => ({...p, displayNumber: i + 1}));
+
+
     return (
         <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', background: '#fcfcfd', minHeight: '100vh' }}>
             
@@ -202,15 +239,15 @@ export default function Rutas() {
                                         <DirectionsRenderer directions={directionsResult} options={{ suppressMarkers: true, polylineOptions: { strokeColor: '#1570ef', strokeWeight: 5 } }} />
                                     )}
                                     
-                                    {selectedRuta.paradas && selectedRuta.paradas.map((parada, index) => (
+                                    {paradasOrdenadas.map((parada) => (
                                         <MarkerF 
-                                            key={`parada-${index}`}
+                                            key={`parada-${parada.displayNumber}`}
                                             position={{ 
                                                 lat: parseFloat(parada.latDestino), 
                                                 lng: parseFloat(parada.lngDestino) 
                                             }}
                                             label={{
-                                                text: (index + 1).toString(),
+                                                text: parada.displayNumber.toString(),
                                                 color: 'white',
                                                 fontWeight: 'bold',
                                                 fontSize: '14px'
