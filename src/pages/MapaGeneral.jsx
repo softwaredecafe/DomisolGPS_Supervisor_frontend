@@ -110,10 +110,10 @@ export default function MapaGeneral() {
           
           <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#344054', background: '#f9fafb', padding: '8px 16px', borderRadius: '20px', border: '1px solid #eaecf0', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#1570ef', border: '2px solid #fff' }}></div> Asesor</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0ea5e9', border: '2px solid #fff' }}></div> Asesor Mayoreo</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#2f6b00', border: '2px solid #fff' }}></div> Asesor Mayoreo</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fdb022', border: '2px solid #fff' }}></div> Gerente</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#12b76a', border: '2px solid #fff' }}></div> Mayoreo</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#7a5af8', border: '2px solid #fff' }}></div> Supervisión</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ed3f00', border: '2px solid #fff' }}></div> Supervisión</div>
           </div>
         </div>
 
