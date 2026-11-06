@@ -88,25 +88,36 @@ export default function Dashboard() {
   }, [map, vendedores, visitas]);
 
   const getDotIcon = (vendedor) => {
-    if (vendedor.minutos_inactivo > 5) {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25"><circle cx="12" cy="12" r="10" fill="#8792a3" stroke="white" stroke-width="3"/></svg>`;
-      return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
-    }
-
-    const r = (vendedor.rol || '').toLowerCase();
     let color = '#1570ef'; 
-    if (r.includes('gerente')) color = '#fdb022';
-    if (r.includes('supervis')) color = '#ed3f00';
-    if (r.includes('asesor mayoreo')) color = '#2f6b00'; 
-    else if (r.includes('mayoreo')) color = '#12b76a'; 
+    const r = (vendedor.rol || '').toLowerCase();
+    
+    if (vendedor.minutos_inactivo > 5) color = '#8792a3';
+    else if (r.includes('gerente')) color = '#fdb022';
+    else if (r.includes('supervis')) color = '#ed3f00';
+    else if (r.includes('asesor mayoreo')) color = '#2f6b00';
+    else if (r.includes('mayoreo')) color = '#12b76a';
 
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="3"/></svg>`;
-    return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
+    return {
+      path: window.google.maps.SymbolPath.CIRCLE,
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+      scale: 10
+    };
   };
 
   const getCheckInIcon = () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25"><circle cx="12.5" cy="12.5" r="10" fill="#1f9d63" stroke="white" stroke-width="3"/><path d="M8 12.5 l3 3 l6 -6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, anchor: new window.google.maps.Point(12, 12) };
+    return {
+      path: 'M8 12.5 l3 3 l6 -6',
+      fillOpacity: 0,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+      scale: 1,
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25"><circle cx="12.5" cy="12.5" r="10" fill="#1f9d63" stroke="white" stroke-width="2"/><path d="M8 12.5 l3 3 l6 -6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>')}`,
+      scaledSize: window.google && new window.google.maps.Size(25, 25),
+      anchor: window.google && new window.google.maps.Point(12.5, 12.5)
+    };
   };
 
   const handleAprobarRuta = async (rutaCompleta) => {
@@ -221,7 +232,14 @@ export default function Dashboard() {
           <div className="mapTop">
             <div>
               <h3 style={{ margin: 0 }}>Mapa Operativo En Vivo (Google)</h3>
-              <small style={{ color: 'var(--muted)' }}>Ubicaciones azules (Personal) | Pines verdes (Check-ins de clientes)</small>
+              <small style={{ color: 'var(--muted)' }}>Ubicaciones en tiempo real del personal</small>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: '#344054', background: '#f9fafb', padding: '6px 12px', borderRadius: '16px', border: '1px solid #eaecf0', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#1570ef', border: '1px solid #fff' }}></div> Asesor</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#0ea5e9', border: '1px solid #fff' }}></div> A. Mayoreo</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#fdb022', border: '1px solid #fff' }}></div> Gerente</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#12b76a', border: '1px solid #fff' }}></div> Mayoreo</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#7a5af8', border: '1px solid #fff' }}></div> Supervisión</div>
             </div>
           </div>
           <div style={{ height: '560px', width: '100%', position: 'relative' }}>
