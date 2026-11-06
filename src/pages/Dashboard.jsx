@@ -146,7 +146,7 @@ export default function Dashboard() {
       <div className="card routeInbox" style={{ marginBottom: '18px', background: '#e8f7ef', borderColor: '#1f9d63' }}>
         <div className="cardhead">
           <div>
-            <h3 style={{ color: '#1f9d63', margin: 0 }}>Últimos Check-ins Registrados</h3>
+            <h3 style={{ color: '#1f9d63', margin: 0 }}>Últimas Visitas Completadas Registradas</h3>
             <small style={{ color: '#2f3640' }}>Visitas a clientes confirmadas desde campo</small>
           </div>
           <span className="status ok" style={{ background: '#1f9d63', color: 'white' }}>EN VIVO</span>
@@ -214,7 +214,7 @@ export default function Dashboard() {
           <em>Actualización en vivo</em>
         </div>
         <div className="card metric">
-          <span>Check-ins Hoy</span>
+          <span>Visitas Completadas Hoy</span>
           <strong style={{ color: 'var(--green)' }}>{visitas.length}</strong>
           <em style={{ color: 'var(--green)' }}>Visitas exitosas</em>
         </div>
