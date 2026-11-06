@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // <-- 1. Importamos useNavigate
+import { useNavigate } from 'react-router-dom'; 
 
 export default function Reportes() {
-    const navigate = useNavigate(); // <-- 2. Iniciamos el hook de navegación
+    const navigate = useNavigate(); 
 
     const [vendedores, setVendedores] = useState([]);
     const [tiendas, setTiendas] = useState([]);
@@ -66,7 +66,6 @@ export default function Reportes() {
     return (
         <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', background: '#fcfcfd', minHeight: '100vh' }}>
             
-            {/* Cabecera */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                     <h2 style={{ margin: 0, fontSize: '24px', color: '#101828' }}>Reportes</h2>
@@ -82,7 +81,6 @@ export default function Reportes() {
                 </div>
             </div>
 
-            {/* 4 Tarjetas Superiores */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '30px' }}>
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #eaecf0', boxShadow: '0 1px 3px rgba(16,24,40,0.02)' }}>
                     <span style={{ fontSize: '11px', color: '#667085', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TIENDAS MONITOREADAS</span>
@@ -106,7 +104,6 @@ export default function Reportes() {
                 </div>
             </div>
 
-            {/* TABLA PRINCIPAL: Vendedores */}
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #eaecf0', padding: '24px', boxShadow: '0 1px 3px rgba(16, 24, 40, 0.02)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div>
@@ -162,12 +159,11 @@ export default function Reportes() {
                                             </div>
                                         </td>
                                         <td style={{ padding: '16px' }}>
-                                            {/* 3. Botón de alertas interactivo en la tabla */}
                                             <span 
                                                 onClick={() => navigate('/alertas')}
                                                 title="Ir a módulo de alertas"
                                                 style={{ 
-                                                    cursor: 'pointer', /* Manito de clic */
+                                                    cursor: 'pointer', 
                                                     display: 'inline-block',
                                                     background: v.alertasCriticas > 0 ? '#fee4e2' : '#e6f5ed', 
                                                     color: v.alertasCriticas > 0 ? '#d92d20' : '#0d945b', 
@@ -191,25 +187,23 @@ export default function Reportes() {
                 </div>
             </div>
 
-            {/* VISTA EXCLUSIVA SUPERVISOR: Bloques de Sucursales adjuntos al final */}
             {isSupervisor && tiendas.length > 0 && (
                 <div style={{ marginTop: '40px' }}>
                     <h3 style={{ fontSize: '18px', color: '#101828', marginBottom: '20px' }}>Resumen consolidado por sucursal</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                         {tiendas.map((t, idx) => (
-                             {/* 4. Todo el recuadro es presionable hacia Perfiles */}
                              <div 
                                 key={idx} 
                                 onClick={() => navigate('/perfiles')} 
                                 title={`Ver personal de ${t.tienda}`}
                                 style={{ 
-                                    cursor: 'pointer', /* Manito de clic para toda la tarjeta */
+                                    cursor: 'pointer',
                                     background: '#fff', 
                                     borderRadius: '16px', 
                                     border: '1px solid #eaecf0', 
                                     padding: '20px', 
                                     boxShadow: '0 1px 3px rgba(16, 24, 40, 0.02)',
-                                    transition: 'box-shadow 0.2s, transform 0.1s' /* Efecto de botón suave */
+                                    transition: 'box-shadow 0.2s, transform 0.1s'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 10px 25px rgba(16,24,40,0.08)'}
                                 onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(16, 24, 40, 0.02)'}
@@ -222,10 +216,9 @@ export default function Reportes() {
                                         </p>
                                     </div>
                                     
-                                    {/* 5. Etiqueta de alertas en la tarjeta (Clic lleva a Alertas, no a perfiles) */}
                                     <span 
                                         onClick={(e) => {
-                                            e.stopPropagation(); // Evita que se abra 'Perfiles' si le atinaste al botón de 'Alertas'
+                                            e.stopPropagation();
                                             navigate('/alertas');
                                         }}
                                         title="Ir a módulo de alertas"
