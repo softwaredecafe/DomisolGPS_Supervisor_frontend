@@ -64,14 +64,14 @@ export default function Dashboard() {
       let hayPuntos = false;
 
       vendedores.forEach(v => {
-        if (v.latitud && v.longitud) {
+        if (v.latitud && v.longitud && parseFloat(v.latitud) !== 0 && parseFloat(v.longitud) !== 0) {
           bounds.extend({ lat: parseFloat(v.latitud), lng: parseFloat(v.longitud) });
           hayPuntos = true;
         }
       });
 
       visitas.forEach(v => {
-        if (v.latitud && v.longitud) {
+        if (v.latitud && v.longitud && parseFloat(v.latitud) !== 0 && parseFloat(v.longitud) !== 0) {
           bounds.extend({ lat: parseFloat(v.latitud), lng: parseFloat(v.longitud) });
           hayPuntos = true;
         }
@@ -217,7 +217,7 @@ export default function Dashboard() {
                 options={{ mapTypeControl: false, streetViewControl: false }}
               >
                 {vendedores.map((vendedor) => {
-                  if (!vendedor.latitud || !vendedor.longitud) return null;
+                  if (!vendedor.latitud || !vendedor.longitud || parseFloat(vendedor.latitud) === 0) return null;
                   return (
                     <MarkerF 
                       key={`ven-${vendedor.id}`} 
@@ -229,7 +229,7 @@ export default function Dashboard() {
                 })}
 
                 {visitas.map((visita) => {
-                  if (!visita.latitud || !visita.longitud) return null;
+                  if (!visita.latitud || !visita.longitud || parseFloat(visita.latitud) === 0) return null;
                   return (
                     <MarkerF 
                       key={`vis-${visita.id}`} 
