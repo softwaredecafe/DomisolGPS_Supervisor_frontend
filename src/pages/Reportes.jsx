@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // <-- 1. Importamos useNavigate
 
 export default function Reportes() {
+    const navigate = useNavigate(); // <-- 2. Iniciamos el hook de navegación
+
     const [vendedores, setVendedores] = useState([]);
     const [tiendas, setTiendas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -63,7 +66,7 @@ export default function Reportes() {
     return (
         <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', background: '#fcfcfd', minHeight: '100vh' }}>
             
-            {/* Cabecera idéntica */}
+            {/* Cabecera */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                     <h2 style={{ margin: 0, fontSize: '24px', color: '#101828' }}>Reportes</h2>
@@ -79,7 +82,7 @@ export default function Reportes() {
                 </div>
             </div>
 
-            {/* 4 Tarjetas Superiores (Diseño intacto) */}
+            {/* 4 Tarjetas Superiores */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '30px' }}>
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #eaecf0', boxShadow: '0 1px 3px rgba(16,24,40,0.02)' }}>
                     <span style={{ fontSize: '11px', color: '#667085', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TIENDAS MONITOREADAS</span>
@@ -103,7 +106,7 @@ export default function Reportes() {
                 </div>
             </div>
 
-            {/* TABLA PRINCIPAL: Ahora muestra VENDEDORES manteniendo tu CSS original */}
+            {/* TABLA PRINCIPAL: Vendedores */}
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #eaecf0', padding: '24px', boxShadow: '0 1px 3px rgba(16, 24, 40, 0.02)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div>
@@ -159,7 +162,24 @@ export default function Reportes() {
                                             </div>
                                         </td>
                                         <td style={{ padding: '16px' }}>
-                                            <span style={{ background: v.alertasCriticas > 0 ? '#fee4e2' : '#e6f5ed', color: v.alertasCriticas > 0 ? '#d92d20' : '#0d945b', padding: '4px 10px', borderRadius: '16px', fontSize: '11px', fontWeight: 'bold' }}>
+                                            {/* 3. Botón de alertas interactivo en la tabla */}
+                                            <span 
+                                                onClick={() => navigate('/alertas')}
+                                                title="Ir a módulo de alertas"
+                                                style={{ 
+                                                    cursor: 'pointer', /* Manito de clic */
+                                                    display: 'inline-block',
+                                                    background: v.alertasCriticas > 0 ? '#fee4e2' : '#e6f5ed', 
+                                                    color: v.alertasCriticas > 0 ? '#d92d20' : '#0d945b', 
+                                                    padding: '4px 10px', 
+                                                    borderRadius: '16px', 
+                                                    fontSize: '11px', 
+                                                    fontWeight: 'bold',
+                                                    transition: 'opacity 0.2s'
+                                                }}
+                                                onMouseOver={(e) => e.target.style.opacity = '0.8'}
+                                                onMouseOut={(e) => e.target.style.opacity = '1'}
+                                            >
                                                 {v.alertasCriticas > 0 ? `${v.alertasCriticas} críticas` : 'Normal'}
                                             </span>
                                         </td>
@@ -171,13 +191,29 @@ export default function Reportes() {
                 </div>
             </div>
 
-            {/* VISTA EXCLUSIVA SUPERVISOR: Bloques de Sucursales adjuntos al final como en la captura 2 */}
+            {/* VISTA EXCLUSIVA SUPERVISOR: Bloques de Sucursales adjuntos al final */}
             {isSupervisor && tiendas.length > 0 && (
                 <div style={{ marginTop: '40px' }}>
                     <h3 style={{ fontSize: '18px', color: '#101828', marginBottom: '20px' }}>Resumen consolidado por sucursal</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                         {tiendas.map((t, idx) => (
-                             <div key={idx} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #eaecf0', padding: '20px', boxShadow: '0 1px 3px rgba(16, 24, 40, 0.02)' }}>
+                             {/* 4. Todo el recuadro es presionable hacia Perfiles */}
+                             <div 
+                                key={idx} 
+                                onClick={() => navigate('/perfiles')} 
+                                title={`Ver personal de ${t.tienda}`}
+                                style={{ 
+                                    cursor: 'pointer', /* Manito de clic para toda la tarjeta */
+                                    background: '#fff', 
+                                    borderRadius: '16px', 
+                                    border: '1px solid #eaecf0', 
+                                    padding: '20px', 
+                                    boxShadow: '0 1px 3px rgba(16, 24, 40, 0.02)',
+                                    transition: 'box-shadow 0.2s, transform 0.1s' /* Efecto de botón suave */
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 10px 25px rgba(16,24,40,0.08)'}
+                                onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(16, 24, 40, 0.02)'}
+                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                     <div>
                                         <h3 style={{ margin: 0, fontSize: '18px', color: '#101828' }}>{t.tienda}</h3>
@@ -185,7 +221,23 @@ export default function Reportes() {
                                             {t.personalCount} integrantes · {t.asesoresCount} asesores · {t.gerentesCount} gerentes
                                         </p>
                                     </div>
-                                    <span style={{ background: t.alertasCriticas > 0 ? '#fee4e2' : '#e6f5ed', color: t.alertasCriticas > 0 ? '#d92d20' : '#0d945b', padding: '4px 10px', borderRadius: '16px', fontSize: '11px', fontWeight: 'bold' }}>
+                                    
+                                    {/* 5. Etiqueta de alertas en la tarjeta (Clic lleva a Alertas, no a perfiles) */}
+                                    <span 
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Evita que se abra 'Perfiles' si le atinaste al botón de 'Alertas'
+                                            navigate('/alertas');
+                                        }}
+                                        title="Ir a módulo de alertas"
+                                        style={{ 
+                                            cursor: 'pointer',
+                                            background: t.alertasCriticas > 0 ? '#fee4e2' : '#e6f5ed', 
+                                            color: t.alertasCriticas > 0 ? '#d92d20' : '#0d945b', 
+                                            padding: '4px 10px', 
+                                            borderRadius: '16px', 
+                                            fontSize: '11px', 
+                                            fontWeight: 'bold' 
+                                        }}>
                                         {t.alertasCriticas > 0 ? `${t.alertasCriticas} alertas` : 'Normal'}
                                     </span>
                                 </div>
@@ -210,11 +262,11 @@ export default function Reportes() {
                                 </div>
 
                                 {t.alertasCriticas > 0 ? (
-                                    <div style={{ padding: '12px', background: '#fff5df', borderRadius: '8px', border: '1px solid #fec84b', color: '#b54708', fontSize: '13px', marginBottom: '16px' }}>
+                                    <div style={{ padding: '12px', background: '#fff5df', borderRadius: '8px', border: '1px solid #fec84b', color: '#b54708', fontSize: '13px', marginBottom: '0px' }}>
                                         Revisar incidencias pendientes en la tienda.
                                     </div>
                                 ) : (
-                                    <div style={{ padding: '12px', background: '#fff9ea', borderRadius: '8px', border: '1px solid #fde29f', color: '#9b6d10', fontSize: '13px', marginBottom: '16px' }}>
+                                    <div style={{ padding: '12px', background: '#fff9ea', borderRadius: '8px', border: '1px solid #fde29f', color: '#9b6d10', fontSize: '13px', marginBottom: '0px' }}>
                                         Operación estable sin incidencias críticas.
                                     </div>
                                 )}
