@@ -1,4 +1,19 @@
 {
+  "headers": [
+    {
+      "source": "/DoMiSol-App.apk",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"DoMiSol-App.apk\""
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
